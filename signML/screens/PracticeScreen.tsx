@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { Camera } from "expo-camera";
 import { MotiView, AnimatePresence } from "moti";
@@ -21,6 +21,7 @@ const PracticeScreen = () => {
   const [type, setType] = useState(Camera.Constants.Type.front);
   const [promptState, setPromptState] = useState<getStateInterface>();
   const [loading, setLoading] = useState(true);
+  const cameraRef = useRef(null);
 
   const requestPerm = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -28,7 +29,7 @@ const PracticeScreen = () => {
   };
 
   const fetchPrompt = async () => {
-    return fetch("https://sign-tutor.herokuapp.com/getState")
+    return fetch(API + "getState")
       .then((response) => response.json())
       .then((json) => {
         setPromptState(json);
@@ -36,6 +37,33 @@ const PracticeScreen = () => {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  const makeGuess = async () => {
+    if (cameraRef?.current != null) {
+      let pic = await cameraRef?.current.takePictureAsync({
+        base64: true,
+        quality: 0.2,
+      });
+      console.log(pic);
+      const body = new FormData();
+      body.append("base64Image", pic.base64);
+      fetch(API + "makeGuess", {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+        body: body,
+      })
+        .then((response) => response.json())
+        .then((json) => {
+          setPromptState(json);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   };
 
   useEffect(() => {
@@ -85,7 +113,17 @@ const PracticeScreen = () => {
   return (
     <View style={styles.container}>
       {hasPermission ? (
-        <Camera style={styles.cameraView} type={type}></Camera>
+        <TouchableOpacity
+          onPress={() => {
+            makeGuess();
+          }}
+        >
+          <Camera
+            style={styles.cameraView}
+            type={type}
+            ref={cameraRef}
+          ></Camera>
+        </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.cameraView}>
           <Text>Camera does not have permission, press to open prompt.</Text>
