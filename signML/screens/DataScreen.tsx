@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Camera } from "expo-camera";
 import { MotiView, AnimatePresence } from "moti";
+import * as MediaLibrary from "expo-media-library";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -17,20 +18,20 @@ interface getStateInterface {
   selectedIndecies: number[];
 }
 
-type LetterInterface = {
+interface LetterProps {
   letter: string;
-  state: number;
-};
+}
 
 const PracticeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [type, setType] = useState(Camera.Constants.Type.front);
-  const [promptState, setPromptState] = useState<getStateInterface>();
-  const [loading, setLoading] = useState(true);
+  const [letters, setLetters] = useState<string[]>();
+  const [imageCount, setImageCount] = useState(0);
+  const [selectedLetter, setSelectedLetter] = useState<String>();
   const cameraRef = useRef(null);
 
   const requestPerm = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status } = await MediaLibrary.requestPermissionsAsync();
     setHasPermission(status === "granted");
   };
 
@@ -38,39 +39,27 @@ const PracticeScreen = () => {
     return fetch(API + "getState")
       .then((response) => response.json())
       .then((json) => {
-        setPromptState(json);
+        setLetters(json.selectedLetters);
+        setSelectedLetter(json.selectedLetters[0]);
       })
       .catch((error) => {
         console.error(error);
       });
   };
 
-  const makeGuess = async () => {
-    setLoading(true);
-    if (cameraRef?.current != null) {
-      let pic = await cameraRef?.current.takePictureAsync({
-        base64: true,
-        quality: 0.2,
-      });
-      const body = new FormData();
-      body.append("base64Image", pic.base64);
-      fetch(API + "makeGuess", {
-        method: "POST",
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-        },
-        body: body,
-      })
-        .then((response) => response.json())
-        .then((json) => {
-          setPromptState(json);
-        })
-        .catch((error) => {
-          console.error(error);
-        })
-        .finally(() => setLoading(false));
+  const saveImage = async () => {
+    try {
+      if (cameraRef?.current != null) {
+        let pic = await cameraRef?.current.takePictureAsync({
+          quality: 0.2,
+        });
+        MediaLibrary.saveToLibraryAsync(pic.uri);
+      }
+    } catch (e) {
+      console.error(e);
     }
+
+    setImageCount(imageCount + 1);
   };
 
   useEffect(() => {
@@ -78,16 +67,8 @@ const PracticeScreen = () => {
     fetchPrompt();
   }, []);
 
-  const Letter = ({ letter, state }: LetterInterface) => {
-    if (state == 0) {
-      //if the letter has been guessed correctly
-      return (
-        <Text key={letter} style={[styles.baseLetter, styles.falseLetter]}>
-          {letter}
-        </Text>
-      );
-    }
-    if (state == 2) {
+  const Letter = ({ letter }: { letter: String }) => {
+    if (letter == selectedLetter) {
       //if the letter has been guessed correctly
       return (
         <View style={{ borderBottomWidth: 3, borderColor: "white" }}>
@@ -98,7 +79,7 @@ const PracticeScreen = () => {
       );
     }
     return (
-      <Text key={letter} style={[styles.baseLetter, styles.trueLetter]}>
+      <Text key={letter} style={[styles.baseLetter]}>
         {letter}
       </Text>
     );
@@ -107,23 +88,31 @@ const PracticeScreen = () => {
   return (
     <View style={styles.container}>
       {hasPermission ? (
-        <Camera style={styles.cameraView} type={type} ref={cameraRef}></Camera>
+        <TouchableOpacity
+          onPress={() => {
+            makeGuess();
+          }}
+        >
+          <Camera
+            style={styles.cameraView}
+            type={type}
+            ref={cameraRef}
+          ></Camera>
+        </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.cameraView}>
           <Text>Camera does not have permission, press to open prompt.</Text>
         </TouchableOpacity>
       )}
       <View style={styles.promptContainer}>
-        <Text style={{ fontSize: 25, color: "white" }}>PROMPT</Text>
+        <Text style={{ fontSize: 25, color: "white" }}>SELECTED LETTER</Text>
         <View style={styles.letterContainer}>
-          {promptState ? (
-            promptState.selectedLetters.map((letter, index) => {
+          {letters ? (
+            letters.map((letter, index) => {
               return (
-                <Letter
-                  key={letter}
-                  letter={letter}
-                  state={promptState.selectedIndecies[index]}
-                />
+                <TouchableOpacity onPress={() => setSelectedLetter(letter)}>
+                  <Letter key={letter} letter={letter} />
+                </TouchableOpacity>
               );
             })
           ) : (
@@ -131,12 +120,8 @@ const PracticeScreen = () => {
           )}
         </View>
       </View>
-      <TouchableOpacity style={styles.btn} onPress={() => makeGuess()}>
-        {!loading ? (
-          <Text style={styles.btnText}>Submit</Text>
-        ) : (
-          <ActivityIndicator size="large" />
-        )}
+      <TouchableOpacity style={styles.btn} onPress={() => saveImage()}>
+        <Text style={styles.btnText}>Save Image</Text>
       </TouchableOpacity>
     </View>
   );
@@ -193,7 +178,6 @@ const styles = StyleSheet.create({
     color: "green",
     fontWeight: "bold",
   },
-
   btn: {
     position: "absolute",
     backgroundColor: colors.primary,

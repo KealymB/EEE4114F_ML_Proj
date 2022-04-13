@@ -22,6 +22,13 @@ const WelcomeScreen = ({ navigation }) => {
         >
           <Text style={styles.btnText}>Test</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => navigation.navigate("dataScreen")}
+        >
+          <Text style={styles.btnText}>Data collect</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -58,7 +65,7 @@ const styles = StyleSheet.create({
   },
   btn: {
     backgroundColor: colors.primary,
-    borderRadius: 5,
+    borderRadius: 10,
     padding: 10,
     margin: 10,
     alignItems: "center",
@@ -74,7 +81,7 @@ const styles = StyleSheet.create({
     elevation: 9,
   },
   btnText: {
-    fontSize: 20,
+    fontSize: 28,
     color: "white",
   },
 });
