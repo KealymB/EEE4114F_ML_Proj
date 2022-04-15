@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Camera } from "expo-camera";
-import { MotiView, AnimatePresence } from "moti";
+import { MotiView, AnimatePresence, Image } from "moti";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -26,8 +26,14 @@ const PracticeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [type, setType] = useState(Camera.Constants.Type.front);
   const [promptState, setPromptState] = useState<getStateInterface>();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
+
+  const E = require("../assets/letters/E.png");
+  const N = require("../assets/letters/N.png");
+  const G = require("../assets/letters/G.png");
+  const I = require("../assets/letters/I.png");
+  const R = require("../assets/letters/R.png");
 
   const requestPerm = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -107,7 +113,9 @@ const PracticeScreen = () => {
   return (
     <View style={styles.container}>
       {hasPermission ? (
-        <Camera style={styles.cameraView} type={type} ref={cameraRef}></Camera>
+        <Camera style={styles.cameraView} type={type} ref={cameraRef}>
+          <Image source={G} style={{ flex: 1, alignSelf: "center" }} />
+        </Camera>
       ) : (
         <TouchableOpacity style={styles.cameraView}>
           <Text>Camera does not have permission, press to open prompt.</Text>
