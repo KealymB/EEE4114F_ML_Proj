@@ -9,7 +9,7 @@ const WelcomeScreen = ({ navigation }) => {
         <Text style={styles.headerText}>SIGN TUTOR</Text>
       </View>
       <View style={styles.wrapper}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.btn}
           onPress={() => navigation.navigate("practiceScreen")}
         >
@@ -21,7 +21,7 @@ const WelcomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("testScreen")}
         >
           <Text style={styles.btnText}>Test</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.btn}
