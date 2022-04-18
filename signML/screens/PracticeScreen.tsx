@@ -26,7 +26,7 @@ type LetterInterface = {
 
 const PracticeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
-  const [type, setType] = useState(Camera.Constants.Type.front);
+  const [type, setType] = useState(Camera.Constants.Type.back);
   const [promptState, setPromptState] = useState<getStateInterface>();
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
@@ -40,9 +40,10 @@ const PracticeScreen = () => {
   const I = require("../assets/letters/I.png");
   const R = require("../assets/letters/R.png");
 
+  const LETTERS = [E, N, G, I, R];
+
   useLayoutEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      console.log(nextAppState);
       setIsActive(nextAppState === "active");
     });
 
@@ -136,7 +137,10 @@ const PracticeScreen = () => {
             ref={cameraRef}
             ratio={"1:1"}
           >
-            <Image source={G} style={{ flex: 1, alignSelf: "center" }} />
+            <Image
+              source={LETTERS[2]}
+              style={{ flex: 1, alignSelf: "center" }}
+            />
           </Camera>
         </View>
       ) : (

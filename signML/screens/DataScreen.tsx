@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   AppState,
+  Alert,
+  Image,
 } from "react-native";
 import { Camera } from "expo-camera";
 import { showMessage, hideMessage } from "react-native-flash-message";
 import * as MediaLibrary from "expo-media-library";
 import * as Permissions from "expo-permissions";
 import { useIsFocused } from "@react-navigation/native";
+import * as Linking from "expo-linking";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -20,16 +23,23 @@ const PracticeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [letters, setLetters] = useState<string[]>();
   const [imageCount, setImageCount] = useState(0);
-  const [selectedLetter, setSelectedLetter] = useState<String>();
+  const [selectedLetter, setSelectedLetter] = useState<number>(0);
   const cameraRef = useRef(null);
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const isFocused = useIsFocused();
 
+  const E = require("../assets/letters/E.png");
+  const N = require("../assets/letters/N.png");
+  const G = require("../assets/letters/G.png");
+  const I = require("../assets/letters/I.png");
+  const R = require("../assets/letters/R.png");
+
+  const LETTERS = [E, N, G, I, R];
+
   useLayoutEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      console.log(nextAppState);
       setIsActive(nextAppState === "active");
     });
 
@@ -50,7 +60,8 @@ const PracticeScreen = () => {
   const requestPerm = async () => {
     const permission = await Permissions.getAsync(Permissions.MEDIA_LIBRARY);
     if (!permission.canAskAgain) {
-      console.log("cant ask bby");
+      Alert.alert("Allow camera permissions");
+      Linking.openSettings();
     }
     if (permission.status !== "granted") {
       const newPermission = await Permissions.askAsync(
@@ -60,7 +71,6 @@ const PracticeScreen = () => {
         setHasPermission(true);
       }
     } else {
-      console.log("focused" + isActive);
       setHasPermission(true);
     }
   };
@@ -70,7 +80,7 @@ const PracticeScreen = () => {
       .then((response) => response.json())
       .then((json) => {
         setLetters(json.selectedLetters);
-        setSelectedLetter(json.selectedLetters[0]);
+        setSelectedLetter(0);
       })
       .catch((error) => {
         console.error(error);
@@ -103,8 +113,8 @@ const PracticeScreen = () => {
     fetchPrompt();
   }, []);
 
-  const Letter = ({ letter }: { letter: String }) => {
-    if (letter == selectedLetter) {
+  const Letter = ({ letter, index }: { letter: String; index: number }) => {
+    if (index == selectedLetter) {
       //if the letter has been guessed correctly
       return (
         <View style={{ borderBottomWidth: 3, borderColor: "white" }}>
@@ -122,11 +132,21 @@ const PracticeScreen = () => {
       {hasPermission && isActive && isFocused ? (
         <View style={styles.cameraView}>
           <Camera
-            type={Camera.Constants.Type.front}
+            type={Camera.Constants.Type.back}
             ref={cameraRef}
             ratio={"1:1"}
             style={{ width: "100%", height: "100%" }}
-          ></Camera>
+          >
+            <Image
+              source={LETTERS[selectedLetter]}
+              style={{
+                width: 300,
+                height: 300,
+                alignSelf: "center",
+                marginTop: -25,
+              }}
+            />
+          </Camera>
         </View>
       ) : (
         <TouchableOpacity
@@ -153,12 +173,12 @@ const PracticeScreen = () => {
               return (
                 <TouchableOpacity
                   onPress={() => {
-                    setSelectedLetter(letter);
+                    setSelectedLetter(index);
                     setImageCount(0);
                   }}
                   key={letter}
                 >
-                  <Letter letter={letter} />
+                  <Letter letter={letter} index={index} />
                 </TouchableOpacity>
               );
             })
