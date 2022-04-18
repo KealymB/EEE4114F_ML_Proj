@@ -113,7 +113,12 @@ const PracticeScreen = () => {
   return (
     <View style={styles.container}>
       {hasPermission ? (
-        <Camera style={styles.cameraView} type={type} ref={cameraRef}>
+        <Camera
+          style={styles.cameraView}
+          type={type}
+          ref={cameraRef}
+          ratio={"1:1"}
+        >
           <Image source={G} style={{ flex: 1, alignSelf: "center" }} />
         </Camera>
       ) : (

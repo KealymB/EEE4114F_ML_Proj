@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import {
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  AppState,
 } from "react-native";
 import { Camera } from "expo-camera";
-import { MotiView, AnimatePresence } from "moti";
+import { showMessage, hideMessage } from "react-native-flash-message";
 import * as MediaLibrary from "expo-media-library";
+import * as Permissions from "expo-permissions";
+import { useIsFocused } from "@react-navigation/native";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -29,10 +32,38 @@ const PracticeScreen = () => {
   const [imageCount, setImageCount] = useState(0);
   const [selectedLetter, setSelectedLetter] = useState<String>();
   const cameraRef = useRef(null);
+  const [isActive, setIsActive] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isFocused = useIsFocused();
+
+  useLayoutEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      console.log(nextAppState);
+      setIsActive(nextAppState === "active");
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
 
   const requestPerm = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    setHasPermission(status === "granted");
+    const permission = await Permissions.getAsync(Permissions.MEDIA_LIBRARY);
+    if (!permission.canAskAgain) {
+      console.log("cant ask bby");
+    }
+    if (permission.status !== "granted") {
+      const newPermission = await Permissions.askAsync(
+        Permissions.MEDIA_LIBRARY
+      );
+      if (newPermission.status === "granted") {
+        setHasPermission(true);
+      }
+    } else {
+      console.log("focused" + isActive);
+      setHasPermission(true);
+    }
   };
 
   const fetchPrompt = async () => {
@@ -49,17 +80,23 @@ const PracticeScreen = () => {
 
   const saveImage = async () => {
     try {
+      setIsSaving(true);
       if (cameraRef?.current != null) {
         let pic = await cameraRef?.current.takePictureAsync({
           quality: 0.2,
         });
         MediaLibrary.saveToLibraryAsync(pic.uri);
+        setImageCount(imageCount + 1); // increase count
+        showMessage({
+          message: "Image saved successfully!",
+          type: "success",
+        });
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSaving(false);
     }
-
-    setImageCount(imageCount + 1);
   };
 
   useEffect(() => {
@@ -72,33 +109,26 @@ const PracticeScreen = () => {
       //if the letter has been guessed correctly
       return (
         <View style={{ borderBottomWidth: 3, borderColor: "white" }}>
-          <Text key={letter} style={[styles.baseLetter, styles.pendingLetter]}>
+          <Text style={[styles.baseLetter, styles.pendingLetter]}>
             {letter}
           </Text>
         </View>
       );
     }
-    return (
-      <Text key={letter} style={[styles.baseLetter]}>
-        {letter}
-      </Text>
-    );
+    return <Text style={[styles.baseLetter]}>{letter}</Text>;
   };
 
   return (
     <View style={styles.container}>
-      {hasPermission ? (
-        <TouchableOpacity
-          onPress={() => {
-            makeGuess();
-          }}
-        >
+      {hasPermission && isActive && isFocused ? (
+        <View style={styles.cameraView}>
           <Camera
-            style={styles.cameraView}
             type={type}
             ref={cameraRef}
+            ratio={"1:1"}
+            style={{ width: "100%", height: "100%" }}
           ></Camera>
-        </TouchableOpacity>
+        </View>
       ) : (
         <TouchableOpacity style={styles.cameraView}>
           <Text>Camera does not have permission, press to open prompt.</Text>
@@ -110,8 +140,11 @@ const PracticeScreen = () => {
           {letters ? (
             letters.map((letter, index) => {
               return (
-                <TouchableOpacity onPress={() => setSelectedLetter(letter)}>
-                  <Letter key={letter} letter={letter} />
+                <TouchableOpacity
+                  onPress={() => setSelectedLetter(letter)}
+                  key={letter}
+                >
+                  <Letter letter={letter} />
                 </TouchableOpacity>
               );
             })
@@ -120,9 +153,23 @@ const PracticeScreen = () => {
           )}
         </View>
       </View>
-      <TouchableOpacity style={styles.btn} onPress={() => saveImage()}>
-        <Text style={styles.btnText}>Save Image</Text>
-      </TouchableOpacity>
+      {!isSaving ? (
+        <>
+          <TouchableOpacity style={styles.btn} onPress={() => saveImage()}>
+            <Text style={styles.btnText}>Save Image</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => saveImage()}
+            disabled={true}
+          >
+            <ActivityIndicator size={"large"} color="#000" />
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };
