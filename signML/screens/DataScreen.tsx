@@ -61,6 +61,8 @@ const PracticeScreen = () => {
   }, [imageCount, selectedLetter]);
 
   const requestPerm = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync(); //request cam permission
+
     const permission = await Permissions.getAsync(Permissions.MEDIA_LIBRARY);
     if (!permission.canAskAgain) {
       Alert.alert("Allow camera permissions");
@@ -146,6 +148,7 @@ const PracticeScreen = () => {
                 width: "100%",
                 height: "100%",
                 alignSelf: "center",
+                opacity: 0.6,
               }}
             />
           </Camera>
