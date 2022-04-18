@@ -8,6 +8,7 @@ import {
   AppState,
   Alert,
   Image,
+  Vibration,
 } from "react-native";
 import { Camera } from "expo-camera";
 import { showMessage, hideMessage } from "react-native-flash-message";
@@ -15,6 +16,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as Permissions from "expo-permissions";
 import { useIsFocused } from "@react-navigation/native";
 import * as Linking from "expo-linking";
+import * as Brightness from "expo-brightness";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -50,6 +52,7 @@ const PracticeScreen = () => {
 
   useEffect(() => {
     if (imageCount >= 10) {
+      Vibration.vibrate(); //vibrate over image count
       showMessage({
         message: "All images for this letter done, please move to next letter!",
         type: "success",
@@ -140,10 +143,9 @@ const PracticeScreen = () => {
             <Image
               source={LETTERS[selectedLetter]}
               style={{
-                width: 300,
-                height: 300,
+                width: "100%",
+                height: "100%",
                 alignSelf: "center",
-                marginTop: -25,
               }}
             />
           </Camera>
