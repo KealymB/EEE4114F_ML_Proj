@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import {
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  AppState,
+  Image,
 } from "react-native";
 import { Camera } from "expo-camera";
-import { MotiView, AnimatePresence, Image } from "moti";
+import { useIsFocused } from "@react-navigation/native";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -29,11 +31,25 @@ const PracticeScreen = () => {
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
+  const [isActive, setIsActive] = useState(true);
+  const isFocused = useIsFocused();
+
   const E = require("../assets/letters/E.png");
   const N = require("../assets/letters/N.png");
   const G = require("../assets/letters/G.png");
   const I = require("../assets/letters/I.png");
   const R = require("../assets/letters/R.png");
+
+  useLayoutEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      console.log(nextAppState);
+      setIsActive(nextAppState === "active");
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
 
   const requestPerm = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -112,17 +128,31 @@ const PracticeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {hasPermission ? (
-        <Camera
-          style={styles.cameraView}
-          type={type}
-          ref={cameraRef}
-          ratio={"1:1"}
-        >
-          <Image source={G} style={{ flex: 1, alignSelf: "center" }} />
-        </Camera>
+      {hasPermission && isActive && isFocused ? (
+        <View style={styles.cameraView}>
+          <Camera
+            style={{ width: "100%", height: "100%" }}
+            type={type}
+            ref={cameraRef}
+            ratio={"1:1"}
+          >
+            <Image source={G} style={{ flex: 1, alignSelf: "center" }} />
+          </Camera>
+        </View>
       ) : (
-        <TouchableOpacity style={styles.cameraView}>
+        <TouchableOpacity
+          style={[
+            styles.cameraView,
+            {
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.primary,
+            },
+          ]}
+          onPress={() => {
+            requestPerm();
+          }}
+        >
           <Text>Camera does not have permission, press to open prompt.</Text>
         </TouchableOpacity>
       )}
@@ -140,7 +170,7 @@ const PracticeScreen = () => {
               );
             })
           ) : (
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color="#000" />
           )}
         </View>
       </View>
@@ -148,7 +178,7 @@ const PracticeScreen = () => {
         {!loading ? (
           <Text style={styles.btnText}>Submit</Text>
         ) : (
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color="#000" />
         )}
       </TouchableOpacity>
     </View>

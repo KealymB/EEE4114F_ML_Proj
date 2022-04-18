@@ -16,18 +16,8 @@ import { useIsFocused } from "@react-navigation/native";
 import colors from "../utils/theme";
 import API from "../utils/API";
 
-interface getStateInterface {
-  selectedLetters: string[];
-  selectedIndecies: number[];
-}
-
-interface LetterProps {
-  letter: string;
-}
-
 const PracticeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
-  const [type, setType] = useState(Camera.Constants.Type.front);
   const [letters, setLetters] = useState<string[]>();
   const [imageCount, setImageCount] = useState(0);
   const [selectedLetter, setSelectedLetter] = useState<String>();
@@ -47,6 +37,15 @@ const PracticeScreen = () => {
       subscription?.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (imageCount >= 10) {
+      showMessage({
+        message: "All images for this letter done, please move to next letter!",
+        type: "success",
+      });
+    }
+  }, [imageCount, selectedLetter]);
 
   const requestPerm = async () => {
     const permission = await Permissions.getAsync(Permissions.MEDIA_LIBRARY);
@@ -123,14 +122,26 @@ const PracticeScreen = () => {
       {hasPermission && isActive && isFocused ? (
         <View style={styles.cameraView}>
           <Camera
-            type={type}
+            type={Camera.Constants.Type.front}
             ref={cameraRef}
             ratio={"1:1"}
             style={{ width: "100%", height: "100%" }}
           ></Camera>
         </View>
       ) : (
-        <TouchableOpacity style={styles.cameraView}>
+        <TouchableOpacity
+          style={[
+            styles.cameraView,
+            {
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.primary,
+            },
+          ]}
+          onPress={() => {
+            requestPerm();
+          }}
+        >
           <Text>Camera does not have permission, press to open prompt.</Text>
         </TouchableOpacity>
       )}
@@ -141,7 +152,10 @@ const PracticeScreen = () => {
             letters.map((letter, index) => {
               return (
                 <TouchableOpacity
-                  onPress={() => setSelectedLetter(letter)}
+                  onPress={() => {
+                    setSelectedLetter(letter);
+                    setImageCount(0);
+                  }}
                   key={letter}
                 >
                   <Letter letter={letter} />
@@ -152,6 +166,9 @@ const PracticeScreen = () => {
             <ActivityIndicator size="large" />
           )}
         </View>
+      </View>
+      <View style={styles.countContainer}>
+        <Text>{imageCount}/10</Text>
       </View>
       {!isSaving ? (
         <>
@@ -194,6 +211,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     borderRadius: 20,
     marginTop: 50,
+    alignItems: "center",
+    padding: 8,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.32,
+    shadowRadius: 5.46,
+
+    elevation: 9,
+  },
+  countContainer: {
+    backgroundColor: colors.secondary,
+    borderRadius: 20,
+    marginTop: 20,
     alignItems: "center",
     padding: 8,
 
