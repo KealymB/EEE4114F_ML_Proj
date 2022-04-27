@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import FlashMessage from "react-native-flash-message";
@@ -21,12 +21,16 @@ export default function App() {
           <Stack.Screen
             name="welcomeScreen"
             component={WelcomeScreen}
-            options={{ headerShown: false }}
+            options={{
+              headerShown: false,
+            }}
           />
           <Stack.Screen
             name="practiceScreen"
             component={PracticeScreen}
-            options={{ title: "Practice" }}
+            options={{
+              title: "Practice",
+            }}
           />
           <Stack.Screen
             name="testScreen"

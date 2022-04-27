@@ -1,3 +1,3 @@
-const API = "https://sign-tutor.herokuapp.com/";
+const API = "https://signtutor.azurewebsites.net/";
 
 export default API;

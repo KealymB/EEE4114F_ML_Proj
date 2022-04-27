@@ -10,24 +10,22 @@ import {
 } from "react-native";
 import { Camera } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
 
-interface getStateInterface {
-  selectedLetters: string[];
-  selectedIndecies: number[];
-}
-
-type LetterInterface = {
-  letter: string;
-  state: number;
-};
-
-const PracticeScreen = () => {
+const PracticeScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [type, setType] = useState(Camera.Constants.Type.back);
-  const [promptState, setPromptState] = useState<getStateInterface>();
+  const [letterSet, setLetterSet] = useState<string[] | []>([
+    "E",
+    "N",
+    "G",
+    "I",
+    "R",
+  ]);
+  const [currLetter, setCurrLetter] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
@@ -43,6 +41,13 @@ const PracticeScreen = () => {
   const LETTERS = [E, N, G, I, R];
 
   useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => clearGame()}>
+          <MaterialCommunityIcons name="restart" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       setIsActive(nextAppState === "active");
     });
@@ -61,7 +66,25 @@ const PracticeScreen = () => {
     return fetch(API + "getState")
       .then((response) => response.json())
       .then((json) => {
-        setPromptState(json);
+        console.log(json.letterSet);
+        if (json.letterSet) {
+          setCurrLetter(json.currLetter);
+          setLetterSet(json.letterSet);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const clearGame = async () => {
+    return fetch(API + "clearState", { method: "POST" })
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.letterSet) {
+          setCurrLetter(json.currLetter);
+          setLetterSet(json.letterSet);
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -75,8 +98,10 @@ const PracticeScreen = () => {
         base64: true,
         quality: 0.2,
       });
+
       const body = new FormData();
       body.append("base64Image", pic.base64);
+
       fetch(API + "makeGuess", {
         method: "POST",
         headers: {
@@ -87,7 +112,9 @@ const PracticeScreen = () => {
       })
         .then((response) => response.json())
         .then((json) => {
-          setPromptState(json);
+          console.log("made guess");
+          setCurrLetter(json.currLetter);
+          console.log("LEtter: " + json.currLetter);
         })
         .catch((error) => {
           console.error(error);
@@ -101,29 +128,79 @@ const PracticeScreen = () => {
     fetchPrompt();
   }, []);
 
-  const Letter = ({ letter, state }: LetterInterface) => {
-    if (state == 0) {
-      //if the letter has been guessed correctly
-      return (
-        <Text key={letter} style={[styles.baseLetter, styles.falseLetter]}>
-          {letter}
-        </Text>
-      );
+  const Letter = ({ letter, id }) => {
+    let state = 0;
+    if (currLetter < id) {
+      // letter guessed correctly
+      state = 2;
+    } else if (currLetter > id) {
+      // letter still to be guessed
+      state = 1;
+    } else if (currLetter == id) {
+      //this is the current letter
+      state = 0;
     }
-    if (state == 2) {
-      //if the letter has been guessed correctly
+    if (state == 0) {
+      //this is the current letter
       return (
-        <View style={{ borderBottomWidth: 3, borderColor: "white" }}>
-          <Text key={letter} style={[styles.baseLetter, styles.pendingLetter]}>
+        <View
+          style={{
+            padding: 5,
+            borderRadius: 5,
+            borderWidth: 2,
+            borderColor: "white",
+            margin: 2,
+          }}
+        >
+          <Text key={letter} style={styles.baseLetter}>
             {letter}
           </Text>
         </View>
       );
     }
+    if (state == 2) {
+      // letter still to be guessed
+      return (
+        <View
+          style={{
+            padding: 5,
+            borderRadius: 5,
+            borderWidth: 2,
+            borderColor: "grey",
+            margin: 2,
+            width: 70,
+            alignItems: "center",
+          }}
+        >
+          <Text key={letter} style={[styles.baseLetter, { color: "gray" }]}>
+            {letter}
+          </Text>
+        </View>
+      );
+    }
+    // letter guessed correctly
     return (
-      <Text key={letter} style={[styles.baseLetter, styles.trueLetter]}>
-        {letter}
-      </Text>
+      <View
+        style={{
+          padding: 5,
+          borderRadius: 5,
+          borderWidth: 2,
+          borderColor: "green",
+          margin: 2,
+          width: 70,
+          alignItems: "center",
+        }}
+      >
+        <Ionicons
+          name="checkmark-circle-sharp"
+          size={16}
+          color="green"
+          style={{ position: "absolute", right: 0 }}
+        />
+        <Text key={letter} style={[styles.baseLetter, { color: "green" }]}>
+          {letter}
+        </Text>
+      </View>
     );
   };
 
@@ -138,7 +215,7 @@ const PracticeScreen = () => {
             ratio={"1:1"}
           >
             <Image
-              source={LETTERS[2]}
+              source={LETTERS[currLetter]}
               style={{ flex: 1, alignSelf: "center" }}
             />
           </Camera>
@@ -163,19 +240,9 @@ const PracticeScreen = () => {
       <View style={styles.promptContainer}>
         <Text style={{ fontSize: 25, color: "white" }}>PROMPT</Text>
         <View style={styles.letterContainer}>
-          {promptState ? (
-            promptState.selectedLetters.map((letter, index) => {
-              return (
-                <Letter
-                  key={letter}
-                  letter={letter}
-                  state={promptState.selectedIndecies[index]}
-                />
-              );
-            })
-          ) : (
-            <ActivityIndicator size="large" color="#000" />
-          )}
+          {letterSet.map((letter, index) => {
+            return <Letter key={index} letter={letter} id={index} />;
+          })}
         </View>
       </View>
       <TouchableOpacity style={styles.btn} onPress={() => makeGuess()}>
@@ -227,7 +294,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   baseLetter: {
-    fontSize: 80,
+    fontSize: 60,
+    color: "white",
+    fontWeight: "500",
   },
   pendingLetter: {
     color: "white",

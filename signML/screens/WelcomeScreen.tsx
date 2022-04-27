@@ -9,12 +9,14 @@ const WelcomeScreen = ({ navigation }) => {
         <Text style={styles.headerText}>SIGN TUTOR</Text>
       </View>
       <View style={styles.wrapper}>
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.btn}
           onPress={() => navigation.navigate("practiceScreen")}
         >
           <Text style={styles.btnText}>Practice</Text>
         </TouchableOpacity>
+        {/* 
+          
 
         <TouchableOpacity
           style={styles.btn}
@@ -23,12 +25,12 @@ const WelcomeScreen = ({ navigation }) => {
           <Text style={styles.btnText}>Test</Text>
         </TouchableOpacity> */}
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.btn}
           onPress={() => navigation.navigate("dataScreen")}
         >
           <Text style={styles.btnText}>Data collect</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
