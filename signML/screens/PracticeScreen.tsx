@@ -8,7 +8,7 @@ import {
   AppState,
   Image,
 } from "react-native";
-import { Camera } from "expo-camera";
+import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -44,7 +44,7 @@ const PracticeScreen = ({ navigation }) => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={() => clearGame()}>
-          <MaterialCommunityIcons name="restart" size={24} color="black" />
+          <Text style={{ color: "white" }}>Restart</Text>
         </TouchableOpacity>
       ),
     });
@@ -150,6 +150,7 @@ const PracticeScreen = ({ navigation }) => {
             borderWidth: 2,
             borderColor: "white",
             margin: 2,
+            width: "20%",
           }}
         >
           <Text key={letter} style={styles.baseLetter}>
@@ -168,8 +169,10 @@ const PracticeScreen = ({ navigation }) => {
             borderWidth: 2,
             borderColor: "grey",
             margin: 2,
-            width: 70,
+            width: "20%",
             alignItems: "center",
+            alignContent: "center",
+            justifyContent: "center",
           }}
         >
           <Text key={letter} style={[styles.baseLetter, { color: "gray" }]}>
@@ -213,10 +216,11 @@ const PracticeScreen = ({ navigation }) => {
             type={type}
             ref={cameraRef}
             ratio={"1:1"}
+            flashMode={Constants.FlashMode.on}
           >
             <Image
               source={LETTERS[currLetter]}
-              style={{ flex: 1, alignSelf: "center" }}
+              style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
             />
           </Camera>
         </View>
@@ -238,7 +242,7 @@ const PracticeScreen = ({ navigation }) => {
         </TouchableOpacity>
       )}
       <View style={styles.promptContainer}>
-        <Text style={{ fontSize: 25, color: "white" }}>PROMPT</Text>
+        <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
         <View style={styles.letterContainer}>
           {letterSet.map((letter, index) => {
             return <Letter key={index} letter={letter} id={index} />;
@@ -274,10 +278,13 @@ const styles = StyleSheet.create({
   },
   promptContainer: {
     backgroundColor: colors.secondary,
+    borderColor: colors.primary,
+    borderWidth: 2,
     borderRadius: 20,
     marginTop: 50,
+    margin: 8,
     alignItems: "center",
-    padding: 8,
+    padding: 4,
 
     shadowColor: "#000",
     shadowOffset: {
@@ -294,25 +301,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   baseLetter: {
-    fontSize: 60,
+    fontSize: 50,
     color: "white",
-    fontWeight: "500",
+    alignSelf: "center",
   },
   pendingLetter: {
     color: "white",
   },
-  falseLetter: {
-    color: "red",
-    fontWeight: "bold",
-  },
   trueLetter: {
     color: "green",
-    fontWeight: "bold",
   },
 
   btn: {
     position: "absolute",
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
+    borderWidth: 2,
+    borderColor: colors.primary,
     borderRadius: 10,
     padding: 10,
     margin: 10,

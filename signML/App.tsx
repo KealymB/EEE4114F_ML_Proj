@@ -9,6 +9,7 @@ import PracticeScreen from "./screens/PracticeScreen";
 import TestScreen from "./screens/TestScreen";
 import DataScreen from "./screens/DataScreen";
 import Constants from "expo-constants";
+import colors from "./utils/theme";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,30 +18,60 @@ export default function App() {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer>
-        <Stack.Navigator>
+        <Stack.Navigator
+          defaultScreenOptions={{
+            headerStyle: { backgroundColor: colors.primary },
+          }}
+        >
           <Stack.Screen
             name="welcomeScreen"
             component={WelcomeScreen}
             options={{
               headerShown: false,
+              headerStyle: { backgroundColor: colors.primary },
             }}
           />
           <Stack.Screen
             name="practiceScreen"
             component={PracticeScreen}
             options={{
-              title: "Practice",
+              title: "Learn",
+              headerStyle: {
+                backgroundColor: colors.primary,
+              },
+              headerTintColor: "#fff",
+              headerTitleStyle: {
+                fontWeight: "regular",
+              },
             }}
           />
           <Stack.Screen
             name="testScreen"
             component={TestScreen}
-            options={{ title: "Test" }}
+            options={{
+              title: "Practice",
+              headerStyle: {
+                backgroundColor: colors.primary,
+              },
+              headerTintColor: "#fff",
+              headerTitleStyle: {
+                fontWeight: "regular",
+              },
+            }}
           />
           <Stack.Screen
             name="dataScreen"
             component={DataScreen}
-            options={{ title: "Data Collect" }}
+            options={{
+              title: "How to",
+              headerStyle: {
+                backgroundColor: colors.primary,
+              },
+              headerTintColor: "#fff",
+              headerTitleStyle: {
+                fontWeight: "regular",
+              },
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>

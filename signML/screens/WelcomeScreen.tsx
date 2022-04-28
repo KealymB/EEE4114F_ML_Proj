@@ -5,32 +5,33 @@ import colors from "../utils/theme";
 const WelcomeScreen = ({ navigation }) => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.tertiary }}>
-      <View style={styles.headerCont}>
+      <View style={{ marginTop: 90, marginBottom: 150 }}>
         <Text style={styles.headerText}>SIGN TUTOR</Text>
       </View>
       <View style={styles.wrapper}>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => navigation.navigate("practiceScreen")}
-        >
-          <Text style={styles.btnText}>Practice</Text>
+        <View>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => navigation.navigate("practiceScreen")}
+          >
+            <Text style={styles.btnText}>Learn</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => navigation.navigate("testScreen")}
+          >
+            <Text style={styles.btnText}>Practice</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={() => navigation.navigate("dataScreen")}>
+          <View style={{ alignItems: "center", marginBottom: 50 }}>
+            <Text style={{ color: colors.primary }}>How to play?</Text>
+          </View>
         </TouchableOpacity>
-        {/* 
-          
-
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => navigation.navigate("testScreen")}
-        >
-          <Text style={styles.btnText}>Test</Text>
-        </TouchableOpacity> */}
-
-        {/* <TouchableOpacity
-          style={styles.btn}
-          onPress={() => navigation.navigate("dataScreen")}
-        >
-          <Text style={styles.btnText}>Data collect</Text>
-        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     elevation: 9,
   },
   headerText: {
-    color: "white",
+    color: colors.primary,
     fontSize: 40,
     alignSelf: "center",
   },
@@ -66,7 +67,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   btn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
+    borderColor: colors.primary,
+    borderWidth: 2,
     borderRadius: 10,
     padding: 10,
     margin: 10,
