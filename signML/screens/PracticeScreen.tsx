@@ -7,10 +7,12 @@ import {
   ActivityIndicator,
   AppState,
   Image,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -18,6 +20,7 @@ import API from "../utils/API";
 const PracticeScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [type, setType] = useState(Camera.Constants.Type.back);
+  const [errorCount, setErrorCount] = useState(0);
   const [letterSet, setLetterSet] = useState<string[] | []>([
     "E",
     "N",
@@ -28,6 +31,7 @@ const PracticeScreen = ({ navigation }) => {
   const [currLetter, setCurrLetter] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
+  const [helpModalVis, setHelpModalVis] = useState(false);
 
   const [isActive, setIsActive] = useState(true);
   const isFocused = useIsFocused();
@@ -112,9 +116,12 @@ const PracticeScreen = ({ navigation }) => {
       })
         .then((response) => response.json())
         .then((json) => {
-          console.log("made guess");
-          setCurrLetter(json.currLetter);
-          console.log("LEtter: " + json.currLetter);
+          if (currLetter == json.currLetter) {
+            setErrorCount(errorCount + 1);
+          } else {
+            setCurrLetter(json.currLetter);
+            setErrorCount(0);
+          }
         })
         .catch((error) => {
           console.error(error);
@@ -150,7 +157,7 @@ const PracticeScreen = ({ navigation }) => {
             borderWidth: 2,
             borderColor: "white",
             margin: 2,
-            width: "20%",
+            width: "25%",
           }}
         >
           <Text key={letter} style={styles.baseLetter}>
@@ -169,7 +176,7 @@ const PracticeScreen = ({ navigation }) => {
             borderWidth: 2,
             borderColor: "grey",
             margin: 2,
-            width: "20%",
+            width: "25%",
             alignItems: "center",
             alignContent: "center",
             justifyContent: "center",
@@ -190,7 +197,7 @@ const PracticeScreen = ({ navigation }) => {
           borderWidth: 2,
           borderColor: "green",
           margin: 2,
-          width: 70,
+          width: "25%",
           alignItems: "center",
         }}
       >
@@ -198,7 +205,7 @@ const PracticeScreen = ({ navigation }) => {
           name="checkmark-circle-sharp"
           size={16}
           color="green"
-          style={{ position: "absolute", right: 0 }}
+          style={{ position: "absolute", right: 0, zIndex: 2 }}
         />
         <Text key={letter} style={[styles.baseLetter, { color: "green" }]}>
           {letter}
@@ -208,55 +215,104 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {hasPermission && isActive && isFocused ? (
-        <View style={styles.cameraView}>
-          <Camera
-            style={{ width: "100%", height: "100%" }}
-            type={type}
-            ref={cameraRef}
-            ratio={"1:1"}
-            flashMode={Constants.FlashMode.on}
+    <>
+      <View style={styles.container}>
+        {hasPermission && isActive && isFocused ? (
+          <View style={styles.cameraView}>
+            <Camera
+              style={{ width: "100%", height: "100%" }}
+              type={type}
+              ref={cameraRef}
+              ratio={"1:1"}
+              flashMode={Constants.FlashMode.on}
+            >
+              <Image
+                source={LETTERS[currLetter]}
+                style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
+              />
+              {errorCount > 2 && (
+                <TouchableOpacity
+                  style={{ position: "absolute", right: 5, top: 5 }}
+                  onPress={() => {
+                    setHelpModalVis(true);
+                  }}
+                >
+                  <Feather name="help-circle" size={40} color="white" />
+                </TouchableOpacity>
+              )}
+            </Camera>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.cameraView,
+              {
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: colors.primary,
+              },
+            ]}
+            onPress={() => {
+              requestPerm();
+            }}
           >
-            <Image
-              source={LETTERS[currLetter]}
-              style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
-            />
-          </Camera>
+            <Text>Camera does not have permission, press to open prompt.</Text>
+          </TouchableOpacity>
+        )}
+        <View style={styles.promptContainer}>
+          <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
+          <View style={styles.letterContainer}>
+            {letterSet.map((letter, index) => {
+              return <Letter key={index} letter={letter} id={index} />;
+            })}
+          </View>
         </View>
-      ) : (
         <TouchableOpacity
-          style={[
-            styles.cameraView,
-            {
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: colors.primary,
-            },
-          ]}
-          onPress={() => {
-            requestPerm();
+          style={styles.btn}
+          onPress={() => makeGuess()}
+          disabled={loading}
+        >
+          {!loading ? (
+            <Text style={styles.btnText}>Submit</Text>
+          ) : (
+            <ActivityIndicator size="large" color="#fff" />
+          )}
+        </TouchableOpacity>
+      </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={helpModalVis}
+        onRequestClose={() => {
+          setHelpModalVis(!helpModalVis);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            marginBottom: 160,
+            width: "80%",
+            padding: 10,
+            borderRadius: 20,
+            backgroundColor: colors.secondary,
+            borderWidth: 2,
+            borderColor: colors.primary,
+            alignSelf: "center",
+            marginTop: 160,
           }}
         >
-          <Text>Camera does not have permission, press to open prompt.</Text>
-        </TouchableOpacity>
-      )}
-      <View style={styles.promptContainer}>
-        <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
-        <View style={styles.letterContainer}>
-          {letterSet.map((letter, index) => {
-            return <Letter key={index} letter={letter} id={index} />;
-          })}
+          <TouchableOpacity
+            style={{ justifyContent: "flex-end", flexDirection: "row" }}
+            onPress={() => setHelpModalVis(false)}
+          >
+            <Feather name="x-circle" size={30} color="white" />
+          </TouchableOpacity>
+          <View>
+            <Text style={{ color: "white", fontSize: 40 }}>Hint</Text>
+          </View>
         </View>
-      </View>
-      <TouchableOpacity style={styles.btn} onPress={() => makeGuess()}>
-        {!loading ? (
-          <Text style={styles.btnText}>Submit</Text>
-        ) : (
-          <ActivityIndicator size="large" color="#000" />
-        )}
-      </TouchableOpacity>
-    </View>
+      </Modal>
+    </>
   );
 };
 
@@ -282,7 +338,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 20,
     marginTop: 50,
-    margin: 8,
+    margin: 40,
     alignItems: "center",
     padding: 4,
 
