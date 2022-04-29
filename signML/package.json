@@ -19,6 +19,7 @@
     "expo-camera": "^12.1.2",
     "expo-constants": "~13.0.1",
     "expo-device": "~4.1.0",
+    "expo-firebase-analytics": "~6.0.0",
     "expo-image-manipulator": "~10.2.0",
     "expo-linking": "^3.0.0",
     "expo-media-library": "~14.0.0",

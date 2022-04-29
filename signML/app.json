@@ -16,9 +16,13 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "infoPlist": {}
+      "infoPlist": {},
+      "bundleIdentifier": "com.mypackage.signtutor",
+      "googleServicesFile": "./services/GoogleService-Info.plist"
     },
     "android": {
+      "package": "com.mypackage.signtutor",
+      "googleServicesFile": "./services/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -32,7 +36,18 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyBiMaEYN3ut3Hrv4-Q9MIlZx2E1z4lPWN0",
+          "authDomain": "signtutor-348614.firebaseapp.com",
+          "projectId": "signtutor-348614",
+          "storageBucket": "signtutor-348614.appspot.com",
+          "messagingSenderId": "549913123180",
+          "appId": "1:549913123180:web:dcf8fae7951ec7aff23b49",
+          "measurementId": "G-49Q27HY3Y0"
+        }
+      }
     },
     "plugins": ["sentry-expo"],
     "hooks": {

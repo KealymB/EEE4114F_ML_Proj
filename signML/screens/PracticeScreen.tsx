@@ -13,7 +13,8 @@ import {
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as Analytics from "expo-firebase-analytics";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -129,11 +130,16 @@ const PracticeScreen = ({ navigation }) => {
         body: body,
       })
         .then((response) => response.json())
-        .then((json) => {
+        .then(async (json) => {
           console.log(
             "letterPredicted: " + json.letterPredicted,
             " | confidence: " + json.confidence
           );
+          await Analytics.logEvent("prediction", {
+            letterSelected: letterSet[selectedLetter],
+            predictedLetter: json.letterPredicted,
+            confidence: json.confidence,
+          });
 
           if (
             json.confidence >= THRESHOLD &&
