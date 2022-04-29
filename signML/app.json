@@ -34,15 +34,18 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      [
-        "expo-media-library",
+    "plugins": ["sentry-expo"],
+    "hooks": {
+      "postPublish": [
         {
-          "photosPermission": "Allow Sign tutor to access your photos.",
-          "savePhotosPermission": "Allow Sign tutor to save photos.",
-          "isAccessMediaLocationEnabled": "true"
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "bolt-t4",
+            "project": "signtutor",
+            "authToken": "146e383e435f4acf83b5605a413029c8b59658a026eb43ca95aa4533922e9dcd"
+          }
         }
       ]
-    ]
+    }
   }
 }

@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import FlashMessage from "react-native-flash-message";
 import { LogBox } from "react-native";
+import * as Sentry from "sentry-expo";
 
 import WelcomeScreen from "./screens/WelcomeScreen";
 import PracticeScreen from "./screens/PracticeScreen";
@@ -15,6 +16,13 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   LogBox.ignoreAllLogs(); // not for final
+
+  Sentry.init({
+    dsn: "https://28ac5803fc2f4b6fb65cd1852dff5e55@o511887.ingest.sentry.io/6371146",
+    enableInExpoDevelopment: true,
+    debug: false,
+  });
+
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer>
