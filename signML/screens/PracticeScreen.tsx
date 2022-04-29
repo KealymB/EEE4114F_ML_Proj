@@ -134,6 +134,7 @@ const PracticeScreen = ({ navigation }) => {
             "letterPredicted: " + json.letterPredicted,
             " | confidence: " + json.confidence
           );
+
           if (
             json.confidence >= THRESHOLD &&
             json.letterPredicted == letterSet[selectedLetter]
@@ -143,9 +144,9 @@ const PracticeScreen = ({ navigation }) => {
             setSolvedLetters(tempSet);
             setErrorCount(0);
             if (
-              !solvedLetters.find((letter) => {
-                letter == true;
-              })
+              solvedLetters.findIndex((letter) => {
+                return letter == false;
+              }) != -1
             ) {
               let nextLetter = solvedLetters.findIndex((solved, index) => {
                 return solved == false && index > selectedLetter;
