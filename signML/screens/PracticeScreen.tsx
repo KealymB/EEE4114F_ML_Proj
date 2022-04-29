@@ -43,6 +43,7 @@ const PracticeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
   const [helpModalVis, setHelpModalVis] = useState(false);
+  const [predictImage, setPrecitImage] = useState();
 
   const [isActive, setIsActive] = useState(true);
   const isFocused = useIsFocused();
@@ -112,6 +113,7 @@ const PracticeScreen = ({ navigation }) => {
         skipProcessing: true,
         exif: true,
       });
+      cameraRef?.current.pausePreview();
       pic = await manipulateAsync(pic.uri, [], {
         compress: 1,
         format: SaveFormat.JPEG,
@@ -194,7 +196,10 @@ const PracticeScreen = ({ navigation }) => {
         .catch((error) => {
           console.error(error);
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          setLoading(false);
+          cameraRef?.current.resumePreview();
+        });
     }
   };
 
@@ -254,10 +259,13 @@ const PracticeScreen = ({ navigation }) => {
               ratio={"1:1"}
               flashMode={Constants.FlashMode.on}
             >
-              <Image
-                source={LETTERS[selectedLetter]}
-                style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
-              />
+              {!loading && (
+                <Image
+                  source={LETTERS[selectedLetter]}
+                  style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
+                />
+              )}
+
               {errorCount > 1 && (
                 <TouchableOpacity
                   style={{ position: "absolute", right: 5, top: 5 }}
