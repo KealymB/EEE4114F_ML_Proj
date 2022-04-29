@@ -8,11 +8,11 @@ import {
   AppState,
   Image,
   Modal,
-  TouchableWithoutFeedback,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
@@ -99,10 +99,19 @@ const PracticeScreen = ({ navigation }) => {
     setLoading(true);
     if (cameraRef?.current != null) {
       let pic = await cameraRef?.current.takePictureAsync({
-        base64: true,
         quality: 0.2,
+        skipProcessing: true,
+        exif: true,
       });
-
+      pic = await manipulateAsync(
+        pic.uri,
+        [
+          // {
+          //   rotate: -pic.exif.Orientation,
+          // },
+        ],
+        { compress: 1, format: SaveFormat.JPEG, base64: true }
+      );
       const body = new FormData();
       body.append("base64Image", pic.base64);
 
@@ -256,7 +265,9 @@ const PracticeScreen = ({ navigation }) => {
               requestPerm();
             }}
           >
-            <Text>Camera does not have permission, press to open prompt.</Text>
+            <Text style={{ color: "white" }}>
+              Camera does not have permission, press to open prompt.
+            </Text>
           </TouchableOpacity>
         )}
         <View style={styles.promptContainer}>
@@ -331,6 +342,8 @@ const styles = StyleSheet.create({
     width: 250,
     borderRadius: 20,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   promptContainer: {
     backgroundColor: colors.secondary,
