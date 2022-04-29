@@ -1,16 +1,552 @@
-import * as React from "react";
-import { Text, View, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  AppState,
+  Image,
+  Modal,
+  Vibration,
+  Dimensions,
+} from "react-native";
+import { Camera, Constants } from "expo-camera";
+import { useIsFocused } from "@react-navigation/native";
+import { Ionicons, Feather } from "@expo/vector-icons";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as Analytics from "expo-firebase-analytics";
 
-const TestScreen = () => {
+import colors from "../utils/theme";
+import API from "../utils/API";
+import { showMessage } from "react-native-flash-message";
+
+const PracticeScreen = ({ navigation }) => {
+  const THRESHOLD = 30.0;
+  const [hasPermission, setHasPermission] = useState<boolean | undefined>();
+  const [type, setType] = useState(Camera.Constants.Type.back);
+  const [errorCount, setErrorCount] = useState(0);
+  const [letterSet, setLetterSet] = useState<string[] | []>([
+    "E",
+    "N",
+    "G",
+    "I",
+    "N",
+    "E",
+    "E",
+    "R",
+  ]);
+  const [selectedLetter, setSelectedLetter] = useState<number>(0);
+  const [solvedLetters, setSolvedLetters] = useState([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
+  const [loading, setLoading] = useState(false);
+  const cameraRef = useRef(null);
+  const [helpModalVis, setHelpModalVis] = useState(false);
+  const [difficultyModalVis, setDifficultyModalVis] = useState(true);
+  const [predictImage, setPrecitImage] = useState();
+
+  const [isActive, setIsActive] = useState(true);
+  const isFocused = useIsFocused();
+
+  const E_EXAMPLE = require("../assets/EXAMPLE_LETTERS/E_EXAMPLE.jpg");
+  const N_EXAMPLE = require("../assets/EXAMPLE_LETTERS/N_EXAMPLE.jpg");
+  const G_EXAMPLE = require("../assets/EXAMPLE_LETTERS/G_EXAMPLE.jpg");
+  const I_EXAMPLE = require("../assets/EXAMPLE_LETTERS/I_EXAMPLE.jpg");
+  const R_EXAMPLE = require("../assets/EXAMPLE_LETTERS/R_EXAMPLE.jpg");
+
+  const EXAMPLES = [E_EXAMPLE, N_EXAMPLE, G_EXAMPLE, I_EXAMPLE, R_EXAMPLE];
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => clearGame()}>
+          <Text style={{ color: "white" }}>Restart</Text>
+        </TouchableOpacity>
+      ),
+    });
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      setIsActive(nextAppState === "active");
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  const requestPerm = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === "granted");
+  };
+
+  const fetchPrompt = async (difficultyMode: string) => {
+    const body = new FormData();
+    body.append("difficulty", difficultyMode);
+
+    return fetch(API + "getWordSet", {
+      method: "GET",
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+      },
+      body: body,
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        console.log(json.wordSet);
+        if (json.wordSet) {
+          clearGame();
+          setLetterSet(json.wordSet.split(""));
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const clearGame = async () => {
+    const tempArr = new Array(letterSet.length).fill(false);
+    setSolvedLetters(tempArr);
+  };
+
+  const makeGuess = async () => {
+    setLoading(true);
+    if (cameraRef?.current != null) {
+      let pic = await cameraRef?.current.takePictureAsync({
+        quality: 0.2,
+        skipProcessing: true,
+        exif: true,
+      });
+      cameraRef?.current.pausePreview();
+      pic = await manipulateAsync(pic.uri, [], {
+        compress: 1,
+        format: SaveFormat.JPEG,
+        base64: true,
+      });
+      const body = new FormData();
+      body.append("base64Image", pic.base64);
+      body.append("currLetter", letterSet[selectedLetter]);
+
+      fetch(API + "predictLetter", {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+        body: body,
+      })
+        .then((response) => response.json())
+        .then(async (json) => {
+          console.log(
+            "letterPredicted: " + json.letterPredicted,
+            " | confidence: " + json.confidence
+          );
+          await Analytics.logEvent("prediction", {
+            letterSelected: letterSet[selectedLetter],
+            predictedLetter: json.letterPredicted,
+            confidence: json.confidence,
+          });
+
+          if (
+            json.confidence >= THRESHOLD &&
+            json.letterPredicted == letterSet[selectedLetter]
+          ) {
+            let tempSet = solvedLetters;
+            tempSet[selectedLetter] = true;
+            setSolvedLetters(tempSet);
+            setErrorCount(0);
+            if (
+              solvedLetters.findIndex((letter) => {
+                return letter == false;
+              }) != -1
+            ) {
+              let nextLetter = solvedLetters.findIndex((solved, index) => {
+                return solved == false && index > selectedLetter;
+              });
+              if (nextLetter == -1) {
+                nextLetter = solvedLetters.findIndex((solved) => {
+                  return solved == false;
+                });
+              }
+              setSelectedLetter(nextLetter);
+              Vibration.vibrate(1000);
+              showMessage({
+                message: "Well done!! 🎉",
+                type: "success",
+                duration: 5000,
+              });
+            } else {
+              Vibration.vibrate(2000);
+              showMessage({
+                message: "WOOHOO, you learnt 5 ASL letters!! 🎉",
+                description: "Go to Practice to test your skills",
+                type: "success",
+                onPress: () => {
+                  navigation.navigate("dataScreen");
+                },
+                duration: 10000,
+              });
+            }
+          } else {
+            setErrorCount(errorCount + 1);
+            Vibration.vibrate([500, 1000]);
+            showMessage({
+              message: "Keep trying, You've got this!",
+              type: "info",
+              duration: 3000,
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .finally(() => {
+          setLoading(false);
+          cameraRef?.current.resumePreview();
+        });
+    }
+  };
+
+  useEffect(() => {
+    requestPerm();
+  }, []);
+
+  const Letter = ({ letter, id }: { letter: string; id: number }) => {
+    return (
+      <View
+        style={{
+          padding: 5,
+          borderRadius: 5,
+          borderWidth: 2,
+          borderColor:
+            selectedLetter == id
+              ? "white"
+              : solvedLetters[id]
+              ? "green"
+              : "gray",
+          margin: 2,
+          width: Dimensions.get("screen").width / letterSet.length - 10,
+          justifyContent: "center",
+          height: "60%",
+        }}
+      >
+        {solvedLetters[id] && (
+          <Ionicons
+            name="checkmark-circle-sharp"
+            size={16}
+            color="green"
+            style={{ position: "absolute", right: 0, zIndex: 2, top: 0 }}
+          />
+        )}
+        <Text key={letter} style={styles.baseLetter}>
+          {letter}
+        </Text>
+      </View>
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>TestScreen</Text>
-    </View>
+    <>
+      <View style={styles.container}>
+        {hasPermission && isActive && isFocused ? (
+          <View style={styles.cameraView}>
+            <Camera
+              style={{ width: "100%", height: "100%" }}
+              type={type}
+              ref={cameraRef}
+              ratio={"1:1"}
+              flashMode={Constants.FlashMode.on}
+            >
+              {errorCount > 2 && (
+                <TouchableOpacity
+                  style={{ position: "absolute", right: 5, top: 5 }}
+                  onPress={() => {
+                    setHelpModalVis(true);
+                  }}
+                >
+                  <Feather name="help-circle" size={40} color="white" />
+                </TouchableOpacity>
+              )}
+            </Camera>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.cameraView,
+              {
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: colors.primary,
+              },
+            ]}
+            onPress={() => {
+              requestPerm();
+            }}
+          >
+            <Text style={{ color: "white" }}>
+              Camera does not have permission, press to open prompt.
+            </Text>
+          </TouchableOpacity>
+        )}
+        <View style={styles.promptContainer}>
+          <Text style={{ fontSize: 25, color: "white" }}>
+            Complete these letters
+          </Text>
+          <View style={styles.letterContainer}>
+            {letterSet.map((letter, index) => {
+              return <Letter key={index} letter={letter} id={index} />;
+            })}
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => makeGuess()}
+          disabled={loading}
+        >
+          {!loading ? (
+            <Text style={styles.btnText}>Submit</Text>
+          ) : (
+            <ActivityIndicator size="large" color="#fff" />
+          )}
+        </TouchableOpacity>
+      </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={helpModalVis}
+        onRequestClose={() => {
+          setHelpModalVis(!helpModalVis);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            marginBottom: 160,
+            width: "80%",
+            padding: 10,
+            borderRadius: 20,
+            backgroundColor: colors.secondary,
+            borderWidth: 2,
+            borderColor: colors.primary,
+            alignSelf: "center",
+            marginTop: 160,
+          }}
+        >
+          <TouchableOpacity
+            style={{ justifyContent: "flex-end", flexDirection: "row" }}
+            onPress={() => setHelpModalVis(false)}
+          >
+            <Feather name="x-circle" size={30} color="white" />
+          </TouchableOpacity>
+          <View style={{ justifyContent: "center" }}>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 40,
+                alignSelf: "center",
+                marginTop: 20,
+              }}
+            >
+              Example
+            </Text>
+            <View
+              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
+            >
+              <Image
+                style={{ aspectRatio: 1, height: "50%" }}
+                source={EXAMPLES[selectedLetter]}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={difficultyModalVis}
+        onRequestClose={() => {
+          setDifficultyModalVis(!difficultyModalVis);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            marginBottom: 160,
+            width: "80%",
+            padding: 10,
+            borderRadius: 20,
+            backgroundColor: colors.secondary,
+            borderWidth: 2,
+            borderColor: colors.primary,
+            alignSelf: "center",
+            marginTop: 160,
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 40,
+                alignSelf: "center",
+                marginTop: 20,
+                marginBottom: 20,
+              }}
+            >
+              Select Difficulty
+            </Text>
+            <View
+              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setDifficultyModalVis(false);
+                  fetchPrompt("EASY");
+                }}
+                style={styles.diff_btn}
+              >
+                <View style={{ alignItems: "center", marginBottom: 10 }}>
+                  <Text style={styles.diff_btnText}>EASY</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setDifficultyModalVis(false);
+                  fetchPrompt("MEDIUM");
+                }}
+                style={styles.diff_btn}
+              >
+                <View style={{ alignItems: "center", marginBottom: 10 }}>
+                  <Text style={styles.diff_btnText}>MEDIUM</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setDifficultyModalVis(false);
+                  fetchPrompt("HARD");
+                }}
+                style={styles.diff_btn}
+              >
+                <View style={{ alignItems: "center", marginBottom: 10 }}>
+                  <Text style={styles.diff_btnText}>HARD</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
-export default TestScreen;
+export default PracticeScreen;
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {
+    flex: 1,
+    backgroundColor: colors.tertiary,
+    padding: 8,
+    alignItems: "center",
+  },
+  cameraView: {
+    marginTop: 20,
+    height: 250,
+    width: 250,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  promptContainer: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.primary,
+    borderWidth: 2,
+    borderRadius: 20,
+    marginTop: 50,
+    margin: 40,
+    alignItems: "center",
+    padding: 8,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.32,
+    shadowRadius: 5.46,
+
+    elevation: 9,
+  },
+  letterContainer: {
+    flexDirection: "row",
+    height: 100,
+    margin: 10,
+    alignItems: "center",
+  },
+  baseLetter: {
+    fontSize: 30,
+    color: "white",
+    alignSelf: "center",
+  },
+  pendingLetter: {
+    color: "white",
+  },
+  trueLetter: {
+    color: "green",
+  },
+
+  btn: {
+    position: "absolute",
+    backgroundColor: colors.secondary,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 10,
+    padding: 10,
+    margin: 10,
+    bottom: 20,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.32,
+    shadowRadius: 5.46,
+
+    elevation: 9,
+  },
+  btnText: {
+    fontSize: 28,
+    color: "white",
+  },
+  diff_btn: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.primary,
+    borderWidth: 2,
+    borderRadius: 10,
+    padding: 10,
+    margin: 10,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.32,
+    shadowRadius: 5.46,
+
+    elevation: 9,
+  },
+  diff_btnText: {
+    fontSize: 28,
+    color: "white",
+  },
 });
