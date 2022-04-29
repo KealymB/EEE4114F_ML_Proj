@@ -8,6 +8,7 @@ import {
   AppState,
   Image,
   Modal,
+  Vibration,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
@@ -16,8 +17,10 @@ import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
 
 import colors from "../utils/theme";
 import API from "../utils/API";
+import { showMessage } from "react-native-flash-message";
 
 const PracticeScreen = ({ navigation }) => {
+  const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [errorCount, setErrorCount] = useState(0);
@@ -28,7 +31,14 @@ const PracticeScreen = ({ navigation }) => {
     "I",
     "R",
   ]);
-  const [currLetter, setCurrLetter] = useState<number>(0);
+  const [selectedLetter, setSelectedLetter] = useState<number>(0);
+  const [solvedLetters, setSolvedLetters] = useState([
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
   const [helpModalVis, setHelpModalVis] = useState(false);
@@ -41,6 +51,14 @@ const PracticeScreen = ({ navigation }) => {
   const G = require("../assets/letters/G.png");
   const I = require("../assets/letters/I.png");
   const R = require("../assets/letters/R.png");
+
+  const E_EXAMPLE = require("../assets/EXAMPLE_LETTERS/E_EXAMPLE.jpg");
+  const N_EXAMPLE = require("../assets/EXAMPLE_LETTERS/N_EXAMPLE.jpg");
+  const G_EXAMPLE = require("../assets/EXAMPLE_LETTERS/G_EXAMPLE.jpg");
+  const I_EXAMPLE = require("../assets/EXAMPLE_LETTERS/I_EXAMPLE.jpg");
+  const R_EXAMPLE = require("../assets/EXAMPLE_LETTERS/R_EXAMPLE.jpg");
+
+  const EXAMPLES = [E_EXAMPLE, N_EXAMPLE, G_EXAMPLE, I_EXAMPLE, R_EXAMPLE];
 
   const LETTERS = [E, N, G, I, R];
 
@@ -67,12 +85,12 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   const fetchPrompt = async () => {
-    return fetch(API + "getState")
+    return fetch(API + "getLetterSet")
       .then((response) => response.json())
       .then((json) => {
         console.log(json.letterSet);
         if (json.letterSet) {
-          setCurrLetter(json.currLetter);
+          clearGame();
           setLetterSet(json.letterSet);
         }
       })
@@ -82,17 +100,7 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   const clearGame = async () => {
-    return fetch(API + "clearState", { method: "POST" })
-      .then((response) => response.json())
-      .then((json) => {
-        if (json.letterSet) {
-          setCurrLetter(json.currLetter);
-          setLetterSet(json.letterSet);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    setSolvedLetters([false, false, false, false, false]);
   };
 
   const makeGuess = async () => {
@@ -103,19 +111,16 @@ const PracticeScreen = ({ navigation }) => {
         skipProcessing: true,
         exif: true,
       });
-      pic = await manipulateAsync(
-        pic.uri,
-        [
-          // {
-          //   rotate: -pic.exif.Orientation,
-          // },
-        ],
-        { compress: 1, format: SaveFormat.JPEG, base64: true }
-      );
+      pic = await manipulateAsync(pic.uri, [], {
+        compress: 1,
+        format: SaveFormat.JPEG,
+        base64: true,
+      });
       const body = new FormData();
       body.append("base64Image", pic.base64);
+      body.append("currLetter", letterSet[selectedLetter]);
 
-      fetch(API + "makeGuess", {
+      fetch(API + "predictLetter", {
         method: "POST",
         headers: {
           Accept: "application/json, text/plain, */*",
@@ -125,11 +130,58 @@ const PracticeScreen = ({ navigation }) => {
       })
         .then((response) => response.json())
         .then((json) => {
-          if (currLetter == json.currLetter) {
-            setErrorCount(errorCount + 1);
-          } else {
-            setCurrLetter(json.currLetter);
+          console.log(
+            "letterPredicted: " + json.letterPredicted,
+            " | confidence: " + json.confidence
+          );
+          if (
+            json.confidence >= THRESHOLD &&
+            json.letterPredicted == letterSet[selectedLetter]
+          ) {
+            let tempSet = solvedLetters;
+            tempSet[selectedLetter] = true;
+            setSolvedLetters(tempSet);
             setErrorCount(0);
+            if (
+              !solvedLetters.find((letter) => {
+                letter == true;
+              })
+            ) {
+              let nextLetter = solvedLetters.findIndex((solved, index) => {
+                return solved == false && index > selectedLetter;
+              });
+              if (nextLetter == -1) {
+                nextLetter = solvedLetters.findIndex((solved) => {
+                  return solved == false;
+                });
+              }
+              setSelectedLetter(nextLetter);
+              Vibration.vibrate(1000);
+              showMessage({
+                message: "Well done!! 🎉",
+                type: "success",
+                duration: 5000,
+              });
+            } else {
+              Vibration.vibrate(2000);
+              showMessage({
+                message: "WOOHOO, you learnt 5 ASL letters!! 🎉",
+                description: "Go to Practice to test your skills",
+                type: "success",
+                onPress: () => {
+                  navigation.navigate("dataScreen");
+                },
+                duration: 10000,
+              });
+            }
+          } else {
+            setErrorCount(errorCount + 1);
+            Vibration.vibrate([500, 1000]);
+            showMessage({
+              message: "Keep trying, You've got this!",
+              type: "info",
+              duration: 3000,
+            });
           }
         })
         .catch((error) => {
@@ -144,82 +196,42 @@ const PracticeScreen = ({ navigation }) => {
     fetchPrompt();
   }, []);
 
-  const Letter = ({ letter, id }) => {
-    let state = 0;
-    if (currLetter < id) {
-      // letter guessed correctly
-      state = 2;
-    } else if (currLetter > id) {
-      // letter still to be guessed
-      state = 1;
-    } else if (currLetter == id) {
-      //this is the current letter
-      state = 0;
-    }
-    if (state == 0) {
-      //this is the current letter
-      return (
+  const Letter = ({ letter, id }: { letter: string; id: number }) => {
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedLetter(id);
+        }}
+      >
         <View
           style={{
             padding: 5,
             borderRadius: 5,
             borderWidth: 2,
-            borderColor: "white",
+            borderColor:
+              selectedLetter == id
+                ? "white"
+                : solvedLetters[id]
+                ? "green"
+                : "gray",
             margin: 2,
-            width: "25%",
+            width: 50,
+            justifyContent: "center",
           }}
         >
+          {solvedLetters[id] && (
+            <Ionicons
+              name="checkmark-circle-sharp"
+              size={16}
+              color="green"
+              style={{ position: "absolute", right: 0, zIndex: 2, top: 0 }}
+            />
+          )}
           <Text key={letter} style={styles.baseLetter}>
             {letter}
           </Text>
         </View>
-      );
-    }
-    if (state == 2) {
-      // letter still to be guessed
-      return (
-        <View
-          style={{
-            padding: 5,
-            borderRadius: 5,
-            borderWidth: 2,
-            borderColor: "grey",
-            margin: 2,
-            width: "25%",
-            alignItems: "center",
-            alignContent: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text key={letter} style={[styles.baseLetter, { color: "gray" }]}>
-            {letter}
-          </Text>
-        </View>
-      );
-    }
-    // letter guessed correctly
-    return (
-      <View
-        style={{
-          padding: 5,
-          borderRadius: 5,
-          borderWidth: 2,
-          borderColor: "green",
-          margin: 2,
-          width: "25%",
-          alignItems: "center",
-        }}
-      >
-        <Ionicons
-          name="checkmark-circle-sharp"
-          size={16}
-          color="green"
-          style={{ position: "absolute", right: 0, zIndex: 2 }}
-        />
-        <Text key={letter} style={[styles.baseLetter, { color: "green" }]}>
-          {letter}
-        </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -236,10 +248,10 @@ const PracticeScreen = ({ navigation }) => {
               flashMode={Constants.FlashMode.on}
             >
               <Image
-                source={LETTERS[currLetter]}
+                source={LETTERS[selectedLetter]}
                 style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
               />
-              {errorCount > 2 && (
+              {errorCount > 1 && (
                 <TouchableOpacity
                   style={{ position: "absolute", right: 5, top: 5 }}
                   onPress={() => {
@@ -318,8 +330,25 @@ const PracticeScreen = ({ navigation }) => {
           >
             <Feather name="x-circle" size={30} color="white" />
           </TouchableOpacity>
-          <View>
-            <Text style={{ color: "white", fontSize: 40 }}>Hint</Text>
+          <View style={{ justifyContent: "center" }}>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 40,
+                alignSelf: "center",
+                marginTop: 20,
+              }}
+            >
+              Example
+            </Text>
+            <View
+              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
+            >
+              <Image
+                style={{ aspectRatio: 1, height: "50%" }}
+                source={EXAMPLES[selectedLetter]}
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -353,7 +382,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
     margin: 40,
     alignItems: "center",
-    padding: 4,
+    padding: 8,
 
     shadowColor: "#000",
     shadowOffset: {
@@ -366,8 +395,9 @@ const styles = StyleSheet.create({
     elevation: 9,
   },
   letterContainer: {
-    margin: 25,
     flexDirection: "row",
+    height: 100,
+    margin: 10,
   },
   baseLetter: {
     fontSize: 50,
