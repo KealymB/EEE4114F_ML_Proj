@@ -8,6 +8,7 @@ import {
   AppState,
   Image,
   Vibration,
+  TextInput,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
@@ -25,7 +26,8 @@ import CustomModal from "../Components/CustomModal";
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(1);
+  const [name, setName] = useState("");
 
   const [errorCount, setErrorCount] = useState(0);
   const [letterSet, setLetterSet] = useState<string[] | []>([
@@ -90,9 +92,37 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   const restartGame = () => {
+    const tempArr = new Array(solvedLetters.length).fill(false);
+    setSolvedLetters(tempArr);
     setErrorCount(0);
     setSelectedLetter(0);
     setDifficultyModalVis(true);
+  };
+
+  const saveScore = async () => {
+    setLoading(true);
+    try {
+      const body = new FormData();
+
+      body.append("name", name);
+      body.append("score", score);
+
+      const resp = await fetch(API + "addScore", {
+        method: "POST",
+        body: body,
+      });
+    } catch (error) {
+      console.error(error);
+      showMessage({
+        message: "Network Error",
+        description: "failed to save score",
+        type: "danger",
+      });
+      await Analytics.logEvent("error", { type: "network" });
+    } finally {
+      setLoading(false);
+      restartGame();
+    }
   };
 
   const fetchPrompt = async (difficultyMode: string) => {
@@ -194,6 +224,7 @@ const PracticeScreen = ({ navigation }) => {
               });
             }
           } else {
+            setScore(score - letterSet.length);
             setErrorCount(errorCount + 1);
             Vibration.vibrate([500, 1000]);
             showMessage({
@@ -290,7 +321,10 @@ const PracticeScreen = ({ navigation }) => {
         <Button text="Submit" onPress={() => makeGuess()} loading={loading} />
       </View>
       <CustomModal
-        onClose={() => setHelpModalVis(false)}
+        onClose={() => {
+          setHelpModalVis(false);
+          setScore(score - letterSet.length);
+        }}
         visable={helpModalVis}
         title={"Example"}
       >
@@ -332,6 +366,49 @@ const PracticeScreen = ({ navigation }) => {
               setDifficultyModalVis(false);
             }}
             text="EASY"
+          />
+        </>
+      </CustomModal>
+      <CustomModal visable={score <= 0} title={"Game Over"}>
+        <>
+          <Button
+            onPress={() => {
+              restartGame();
+            }}
+            text="RESTART"
+          />
+          <Button
+            onPress={() => {
+              navigation.navigate("practiceScreen");
+            }}
+            text="Quit"
+          />
+        </>
+      </CustomModal>
+      <CustomModal
+        visable={solvedLetters.findIndex((letter) => letter == false) == -1}
+        title={"Save Score"}
+      >
+        <>
+          <TextInput
+            onChangeText={(text) => setName(text)}
+            value={name}
+            placeholder={"Your name"}
+            style={{
+              height: 50,
+              width: 250,
+              color: "black",
+              backgroundColor: "white",
+              borderRadius: 10,
+              padding: 10,
+            }}
+          />
+          <Button
+            onPress={() => {
+              saveScore();
+            }}
+            text="SAVE"
+            loading={loading}
           />
         </>
       </CustomModal>
