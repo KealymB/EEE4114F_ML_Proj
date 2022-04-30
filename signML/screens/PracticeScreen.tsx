@@ -175,7 +175,7 @@ const PracticeScreen = ({ navigation }) => {
                 description: "Go to Practice to test your skills",
                 type: "success",
                 onPress: () => {
-                  navigation.navigate("dataScreen");
+                  navigation.navigate("testScreen");
                 },
                 duration: 10000,
               });

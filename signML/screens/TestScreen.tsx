@@ -104,7 +104,6 @@ const PracticeScreen = ({ navigation }) => {
         if (json.word) {
           setLetterSet(json.word.split(""));
           const tempArr = new Array(json.word.split("").length).fill(false);
-          console.log(tempArr);
           setSolvedLetters(tempArr);
         }
       })

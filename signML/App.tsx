@@ -7,6 +7,7 @@ import * as Sentry from "sentry-expo";
 
 import WelcomeScreen from "./screens/WelcomeScreen";
 import PracticeScreen from "./screens/PracticeScreen";
+import ScoreScreen from "./screens/ScoreScreen";
 import TestScreen from "./screens/TestScreen";
 import DataScreen from "./screens/DataScreen";
 import Constants from "expo-constants";
@@ -61,6 +62,20 @@ export default function App() {
             component={TestScreen}
             options={{
               title: "Practice",
+              headerStyle: {
+                backgroundColor: colors.secondary,
+              },
+              headerTintColor: "#fff",
+              headerTitleStyle: {
+                fontWeight: "regular",
+              },
+            }}
+          />
+          <Stack.Screen
+            name="scoreScreen"
+            component={ScoreScreen}
+            options={{
+              title: "Scores",
               headerStyle: {
                 backgroundColor: colors.secondary,
               },

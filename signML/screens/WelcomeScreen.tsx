@@ -1,38 +1,45 @@
 import * as React from "react";
 import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import Button from "../Components/Button";
 import colors from "../utils/theme";
 
 const WelcomeScreen = ({ navigation }) => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.tertiary }}>
-      <View style={{ marginTop: 90, marginBottom: 150 }}>
+      <View
+        style={{
+          paddingTop: 90,
+          paddingBottom: 20,
+          marginBottom: 120,
+          backgroundColor: colors.secondary,
+          borderBottomRightRadius: 20,
+          borderBottomLeftRadius: 20,
+        }}
+      >
         <Text style={styles.headerText}>SIGN TUTOR</Text>
       </View>
       <View style={styles.wrapper}>
-        <View>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => navigation.navigate("practiceScreen")}
-          >
-            <Text style={styles.btnText}>Learn</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => navigation.navigate("testScreen")}
-          >
-            <Text style={styles.btnText}>Practice</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity onPress={() => navigation.navigate("dataScreen")}>
-          <View style={{ alignItems: "center", marginBottom: 50 }}>
-            <Text style={{ color: colors.primary }}>How to play?</Text>
-          </View>
-        </TouchableOpacity>
+        <Button
+          onPress={() => navigation.navigate("practiceScreen")}
+          text="Learn"
+        />
+        <Button
+          onPress={() => navigation.navigate("testScreen")}
+          text="Practice"
+        />
+        <Button
+          onPress={() => navigation.navigate("scoreScreen")}
+          text="Scores"
+        />
       </View>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("dataScreen")}
+        style={{ position: "absolute", bottom: 20, alignSelf: "center" }}
+      >
+        <View style={{ alignItems: "center", marginBottom: 50 }}>
+          <Text style={{ color: colors.primary }}>How to play?</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -64,7 +71,6 @@ const styles = StyleSheet.create({
   wrapper: {
     padding: 8,
     justifyContent: "center",
-    flex: 1,
   },
   btn: {
     backgroundColor: colors.secondary,
