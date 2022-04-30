@@ -43,6 +43,7 @@ const Letter: React.FC<LetterProps> = ({
           margin: 2,
           width: (Dimensions.get("window").width - 80) / solvedLetters.length,
           justifyContent: "center",
+          minHeight: 55,
         }}
       >
         {solvedLetters[id] && (

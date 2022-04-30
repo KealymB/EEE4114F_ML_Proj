@@ -13,13 +13,13 @@ import * as Analytics from "expo-firebase-analytics";
 import colors from "../utils/theme";
 import API from "../utils/API";
 
-interface HOWTOTYPE {
+interface ScoreType {
   name: string;
-  score: string;
+  score: number;
 }
 
 const ScoreScreen = () => {
-  const [scores, setScores] = useState<HOWTOTYPE[]>();
+  const [scores, setScores] = useState<ScoreType[]>([]);
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +29,6 @@ const ScoreScreen = () => {
   const fetchScores = async () => {
     setLoading(true);
     try {
-      console.log("heer");
       const resp = await fetch(API + "getScores");
       const json = await resp.json();
       setScores(json.scores);
@@ -47,7 +46,7 @@ const ScoreScreen = () => {
     }
   };
 
-  const Score = ({ name, score }: { name: string; score: string }) => {
+  const Score: React.FC<ScoreType> = ({ name, score }) => {
     return (
       <View
         style={{
@@ -79,7 +78,22 @@ const ScoreScreen = () => {
           />
         }
       >
-        <Score score="10" name="kealym" />
+        {scores?.map((score) => {
+          return <Score score={score.score} name={score.name} />;
+        })}
+        {scores?.length == 0 && (
+          <Text
+            style={{
+              color: colors.primary,
+              justifyContent: "center",
+              fontSize: 20,
+              alignSelf: "center",
+              marginTop: 20,
+            }}
+          >
+            No scores found
+          </Text>
+        )}
       </ScrollView>
     </View>
   );

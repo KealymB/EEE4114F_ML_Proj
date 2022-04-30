@@ -361,6 +361,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     height: 100,
     margin: 10,
+    alignItems: "center",
   },
   btn: {
     position: "absolute",
