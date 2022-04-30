@@ -9,7 +9,6 @@ import {
   Image,
   Modal,
   Vibration,
-  Dimensions,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
@@ -20,11 +19,13 @@ import * as Analytics from "expo-firebase-analytics";
 import colors from "../utils/theme";
 import API from "../utils/API";
 import { showMessage } from "react-native-flash-message";
+import Button from "../Components/Button";
+import Letter from "../Components/Letter";
 
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
-  const [type, setType] = useState(Camera.Constants.Type.back);
+
   const [errorCount, setErrorCount] = useState(0);
   const [letterSet, setLetterSet] = useState<string[] | []>([
     "E",
@@ -51,7 +52,6 @@ const PracticeScreen = ({ navigation }) => {
   const cameraRef = useRef(null);
   const [helpModalVis, setHelpModalVis] = useState(false);
   const [difficultyModalVis, setDifficultyModalVis] = useState(true);
-  const [predictImage, setPrecitImage] = useState();
 
   const [isActive, setIsActive] = useState(true);
   const isFocused = useIsFocused();
@@ -67,7 +67,7 @@ const PracticeScreen = ({ navigation }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={() => clearGame()}>
+        <TouchableOpacity onPress={() => restartGame()}>
           <Text style={{ color: "white" }}>Restart</Text>
         </TouchableOpacity>
       ),
@@ -86,34 +86,31 @@ const PracticeScreen = ({ navigation }) => {
     setHasPermission(status === "granted");
   };
 
+  const restartGame = () => {
+    setSelectedLetter(0);
+    setDifficultyModalVis(true);
+  };
+
   const fetchPrompt = async (difficultyMode: string) => {
     const body = new FormData();
     body.append("difficulty", difficultyMode);
 
     return fetch(API + "getWordSet", {
-      method: "GET",
-      headers: {
-        Accept: "application/json, text/plain, */*",
-        "Content-Type": "application/json",
-      },
+      method: "POST",
       body: body,
     })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json.wordSet);
-        if (json.wordSet) {
-          clearGame();
-          setLetterSet(json.wordSet.split(""));
+        if (json.word) {
+          setLetterSet(json.word.split(""));
+          const tempArr = new Array(json.word.split("").length).fill(false);
+          console.log(tempArr);
+          setSolvedLetters(tempArr);
         }
       })
       .catch((error) => {
-        console.error(error);
+        console.log(error);
       });
-  };
-
-  const clearGame = async () => {
-    const tempArr = new Array(letterSet.length).fill(false);
-    setSolvedLetters(tempArr);
   };
 
   const makeGuess = async () => {
@@ -136,10 +133,6 @@ const PracticeScreen = ({ navigation }) => {
 
       fetch(API + "predictLetter", {
         method: "POST",
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-        },
         body: body,
       })
         .then((response) => response.json())
@@ -185,11 +178,13 @@ const PracticeScreen = ({ navigation }) => {
             } else {
               Vibration.vibrate(2000);
               showMessage({
-                message: "WOOHOO, you learnt 5 ASL letters!! 🎉",
-                description: "Go to Practice to test your skills",
+                message: `Well done, you learnt the word ${letterSet
+                  .toString()
+                  .replace(",", "")} !! 🎉`,
+                description: "Press here to play again, or press restart",
                 type: "success",
                 onPress: () => {
-                  navigation.navigate("dataScreen");
+                  restartGame();
                 },
                 duration: 10000,
               });
@@ -204,8 +199,14 @@ const PracticeScreen = ({ navigation }) => {
             });
           }
         })
-        .catch((error) => {
+        .catch(async (error) => {
           console.error(error);
+          showMessage({
+            message: "Network Error",
+            description: "failed to predict letter",
+            type: "danger",
+          });
+          await Analytics.logEvent("error", { type: "network" });
         })
         .finally(() => {
           setLoading(false);
@@ -218,40 +219,6 @@ const PracticeScreen = ({ navigation }) => {
     requestPerm();
   }, []);
 
-  const Letter = ({ letter, id }: { letter: string; id: number }) => {
-    return (
-      <View
-        style={{
-          padding: 5,
-          borderRadius: 5,
-          borderWidth: 2,
-          borderColor:
-            selectedLetter == id
-              ? "white"
-              : solvedLetters[id]
-              ? "green"
-              : "gray",
-          margin: 2,
-          width: Dimensions.get("screen").width / letterSet.length - 10,
-          justifyContent: "center",
-          height: "60%",
-        }}
-      >
-        {solvedLetters[id] && (
-          <Ionicons
-            name="checkmark-circle-sharp"
-            size={16}
-            color="green"
-            style={{ position: "absolute", right: 0, zIndex: 2, top: 0 }}
-          />
-        )}
-        <Text key={letter} style={styles.baseLetter}>
-          {letter}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <>
       <View style={styles.container}>
@@ -259,7 +226,7 @@ const PracticeScreen = ({ navigation }) => {
           <View style={styles.cameraView}>
             <Camera
               style={{ width: "100%", height: "100%" }}
-              type={type}
+              type={Camera.Constants.Type.back}
               ref={cameraRef}
               ratio={"1:1"}
               flashMode={Constants.FlashMode.on}
@@ -301,7 +268,16 @@ const PracticeScreen = ({ navigation }) => {
           </Text>
           <View style={styles.letterContainer}>
             {letterSet.map((letter, index) => {
-              return <Letter key={index} letter={letter} id={index} />;
+              return (
+                <Letter
+                  key={index}
+                  letter={letter}
+                  id={index}
+                  selectedLetter={selectedLetter}
+                  setSelectedLetter={(index) => setSelectedLetter(index)}
+                  solvedLetters={solvedLetters}
+                />
+              );
             })}
           </View>
         </View>
@@ -319,26 +295,14 @@ const PracticeScreen = ({ navigation }) => {
       </View>
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
         visible={helpModalVis}
         onRequestClose={() => {
           setHelpModalVis(!helpModalVis);
         }}
+        presentationStyle={"pageSheet"}
       >
-        <View
-          style={{
-            flex: 1,
-            marginBottom: 160,
-            width: "80%",
-            padding: 10,
-            borderRadius: 20,
-            backgroundColor: colors.secondary,
-            borderWidth: 2,
-            borderColor: colors.primary,
-            alignSelf: "center",
-            marginTop: 160,
-          }}
-        >
+        <View style={styles.modalWrapper}>
           <TouchableOpacity
             style={{ justifyContent: "flex-end", flexDirection: "row" }}
             onPress={() => setHelpModalVis(false)}
@@ -360,7 +324,7 @@ const PracticeScreen = ({ navigation }) => {
               style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
             >
               <Image
-                style={{ aspectRatio: 1, height: "50%" }}
+                style={{ aspectRatio: 1, height: 250 }}
                 source={EXAMPLES[selectedLetter]}
               />
             </View>
@@ -369,75 +333,42 @@ const PracticeScreen = ({ navigation }) => {
       </Modal>
       <Modal
         animationType="slide"
-        transparent={true}
         visible={difficultyModalVis}
         onRequestClose={() => {
           setDifficultyModalVis(!difficultyModalVis);
         }}
+        presentationStyle={"pageSheet"}
+        transparent={true}
       >
-        <View
-          style={{
-            flex: 1,
-            marginBottom: 160,
-            width: "80%",
-            padding: 10,
-            borderRadius: 20,
-            backgroundColor: colors.secondary,
-            borderWidth: 2,
-            borderColor: colors.primary,
-            alignSelf: "center",
-            marginTop: 160,
-          }}
-        >
-          <View>
-            <Text
-              style={{
-                color: "white",
-                fontSize: 40,
-                alignSelf: "center",
-                marginTop: 20,
-                marginBottom: 20,
+        <View style={styles.modalWrapper}>
+          <Text style={styles.modalHeader}>Select Difficulty</Text>
+          <View
+            style={{
+              alignContent: "center",
+              marginTop: 10,
+            }}
+          >
+            <Button
+              onPress={() => {
+                fetchPrompt("hard");
+                setDifficultyModalVis(false);
               }}
-            >
-              Select Difficulty
-            </Text>
-            <View
-              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  setDifficultyModalVis(false);
-                  fetchPrompt("EASY");
-                }}
-                style={styles.diff_btn}
-              >
-                <View style={{ alignItems: "center", marginBottom: 10 }}>
-                  <Text style={styles.diff_btnText}>EASY</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setDifficultyModalVis(false);
-                  fetchPrompt("MEDIUM");
-                }}
-                style={styles.diff_btn}
-              >
-                <View style={{ alignItems: "center", marginBottom: 10 }}>
-                  <Text style={styles.diff_btnText}>MEDIUM</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setDifficultyModalVis(false);
-                  fetchPrompt("HARD");
-                }}
-                style={styles.diff_btn}
-              >
-                <View style={{ alignItems: "center", marginBottom: 10 }}>
-                  <Text style={styles.diff_btnText}>HARD</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+              text="HARD"
+            />
+            <Button
+              onPress={() => {
+                fetchPrompt("medium");
+                setDifficultyModalVis(false);
+              }}
+              text="MEDIUM"
+            />
+            <Button
+              onPress={() => {
+                fetchPrompt("easy");
+                setDifficultyModalVis(false);
+              }}
+              text="EASY"
+            />
           </View>
         </View>
       </Modal>
@@ -482,6 +413,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5.46,
 
     elevation: 9,
+    width: "95%",
   },
   letterContainer: {
     flexDirection: "row",
@@ -526,27 +458,22 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: "white",
   },
-  diff_btn: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.primary,
-    borderWidth: 2,
-    borderRadius: 10,
+  modalWrapper: {
+    marginBottom: 160,
     padding: 10,
-    margin: 10,
-    alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.32,
-    shadowRadius: 5.46,
-
-    elevation: 9,
+    borderRadius: 20,
+    backgroundColor: colors.secondary,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignSelf: "center",
+    position: "absolute",
+    top: "25%",
   },
-  diff_btnText: {
-    fontSize: 28,
+  modalHeader: {
     color: "white",
+    fontSize: 40,
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 20,
   },
 });

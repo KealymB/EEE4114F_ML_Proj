@@ -16,6 +16,9 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   LogBox.ignoreAllLogs(); // not for final
+  LogBox.ignoreLogs([
+    "Modal with 'pageSheet' presentation style and 'transparent' value is not supported.",
+  ]);
 
   Sentry.init({
     dsn: "https://28ac5803fc2f4b6fb65cd1852dff5e55@o511887.ingest.sentry.io/6371146",
@@ -36,7 +39,7 @@ export default function App() {
             component={WelcomeScreen}
             options={{
               headerShown: false,
-              headerStyle: { backgroundColor: colors.primary },
+              headerStyle: { backgroundColor: colors.secondary },
             }}
           />
           <Stack.Screen
@@ -45,7 +48,7 @@ export default function App() {
             options={{
               title: "Learn",
               headerStyle: {
-                backgroundColor: colors.primary,
+                backgroundColor: colors.secondary,
               },
               headerTintColor: "#fff",
               headerTitleStyle: {
@@ -59,7 +62,7 @@ export default function App() {
             options={{
               title: "Practice",
               headerStyle: {
-                backgroundColor: colors.primary,
+                backgroundColor: colors.secondary,
               },
               headerTintColor: "#fff",
               headerTitleStyle: {
@@ -73,7 +76,7 @@ export default function App() {
             options={{
               title: "How to",
               headerStyle: {
-                backgroundColor: colors.primary,
+                backgroundColor: colors.secondary,
               },
               headerTintColor: "#fff",
               headerTitleStyle: {

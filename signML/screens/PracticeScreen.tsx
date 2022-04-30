@@ -19,11 +19,11 @@ import * as Analytics from "expo-firebase-analytics";
 import colors from "../utils/theme";
 import API from "../utils/API";
 import { showMessage } from "react-native-flash-message";
+import Letter from "../Components/Letter";
 
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
-  const [type, setType] = useState(Camera.Constants.Type.back);
   const [errorCount, setErrorCount] = useState(0);
   const [letterSet, setLetterSet] = useState<string[] | []>([
     "E",
@@ -90,7 +90,6 @@ const PracticeScreen = ({ navigation }) => {
     return fetch(API + "getLetterSet")
       .then((response) => response.json())
       .then((json) => {
-        console.log(json.letterSet);
         if (json.letterSet) {
           clearGame();
           setLetterSet(json.letterSet);
@@ -102,6 +101,7 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   const clearGame = async () => {
+    setSelectedLetter(0);
     setSolvedLetters([false, false, false, false, false]);
   };
 
@@ -123,12 +123,10 @@ const PracticeScreen = ({ navigation }) => {
       body.append("base64Image", pic.base64);
       body.append("currLetter", letterSet[selectedLetter]);
 
+      console.log("here");
+
       fetch(API + "predictLetter", {
         method: "POST",
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-        },
         body: body,
       })
         .then((response) => response.json())
@@ -142,7 +140,6 @@ const PracticeScreen = ({ navigation }) => {
             predictedLetter: json.letterPredicted,
             confidence: json.confidence,
           });
-
           if (
             json.confidence >= THRESHOLD &&
             json.letterPredicted == letterSet[selectedLetter]
@@ -193,8 +190,14 @@ const PracticeScreen = ({ navigation }) => {
             });
           }
         })
-        .catch((error) => {
+        .catch(async (error) => {
           console.error(error);
+          showMessage({
+            message: "Network Error",
+            description: "failed to predict letter",
+            type: "danger",
+          });
+          await Analytics.logEvent("error", { type: "network" });
         })
         .finally(() => {
           setLoading(false);
@@ -208,45 +211,6 @@ const PracticeScreen = ({ navigation }) => {
     fetchPrompt();
   }, []);
 
-  const Letter = ({ letter, id }: { letter: string; id: number }) => {
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedLetter(id);
-        }}
-      >
-        <View
-          style={{
-            padding: 5,
-            borderRadius: 5,
-            borderWidth: 2,
-            borderColor:
-              selectedLetter == id
-                ? "white"
-                : solvedLetters[id]
-                ? "green"
-                : "gray",
-            margin: 2,
-            width: 50,
-            justifyContent: "center",
-          }}
-        >
-          {solvedLetters[id] && (
-            <Ionicons
-              name="checkmark-circle-sharp"
-              size={16}
-              color="green"
-              style={{ position: "absolute", right: 0, zIndex: 2, top: 0 }}
-            />
-          )}
-          <Text key={letter} style={styles.baseLetter}>
-            {letter}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <>
       <View style={styles.container}>
@@ -254,7 +218,7 @@ const PracticeScreen = ({ navigation }) => {
           <View style={styles.cameraView}>
             <Camera
               style={{ width: "100%", height: "100%" }}
-              type={type}
+              type={Camera.Constants.Type.back}
               ref={cameraRef}
               ratio={"1:1"}
               flashMode={Constants.FlashMode.on}
@@ -301,7 +265,16 @@ const PracticeScreen = ({ navigation }) => {
           <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
           <View style={styles.letterContainer}>
             {letterSet.map((letter, index) => {
-              return <Letter key={index} letter={letter} id={index} />;
+              return (
+                <Letter
+                  key={index}
+                  letter={letter}
+                  id={index}
+                  selectedLetter={selectedLetter}
+                  setSelectedLetter={(id) => setSelectedLetter(id)}
+                  solvedLetters={solvedLetters}
+                />
+              );
             })}
           </View>
         </View>
@@ -324,46 +297,21 @@ const PracticeScreen = ({ navigation }) => {
         onRequestClose={() => {
           setHelpModalVis(!helpModalVis);
         }}
+        presentationStyle={"pageSheet"}
       >
-        <View
-          style={{
-            flex: 1,
-            marginBottom: 160,
-            width: "80%",
-            padding: 10,
-            borderRadius: 20,
-            backgroundColor: colors.secondary,
-            borderWidth: 2,
-            borderColor: colors.primary,
-            alignSelf: "center",
-            marginTop: 160,
-          }}
-        >
+        <View style={styles.modalWrapper}>
           <TouchableOpacity
             style={{ justifyContent: "flex-end", flexDirection: "row" }}
             onPress={() => setHelpModalVis(false)}
           >
             <Feather name="x-circle" size={30} color="white" />
           </TouchableOpacity>
-          <View style={{ justifyContent: "center" }}>
-            <Text
-              style={{
-                color: "white",
-                fontSize: 40,
-                alignSelf: "center",
-                marginTop: 20,
-              }}
-            >
-              Example
-            </Text>
-            <View
-              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
-            >
-              <Image
-                style={{ aspectRatio: 1, height: "50%" }}
-                source={EXAMPLES[selectedLetter]}
-              />
-            </View>
+          <View style={{ justifyContent: "center", margin: 10 }}>
+            <Text style={styles.modalHeader}>Example</Text>
+            <Image
+              style={{ aspectRatio: 1, height: 250 }}
+              source={EXAMPLES[selectedLetter]}
+            />
           </View>
         </View>
       </Modal>
@@ -414,18 +362,6 @@ const styles = StyleSheet.create({
     height: 100,
     margin: 10,
   },
-  baseLetter: {
-    fontSize: 50,
-    color: "white",
-    alignSelf: "center",
-  },
-  pendingLetter: {
-    color: "white",
-  },
-  trueLetter: {
-    color: "green",
-  },
-
   btn: {
     position: "absolute",
     backgroundColor: colors.secondary,
@@ -450,5 +386,23 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 28,
     color: "white",
+  },
+  modalWrapper: {
+    marginBottom: 160,
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: colors.secondary,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignSelf: "center",
+    position: "absolute",
+    top: "25%",
+  },
+  modalHeader: {
+    color: "white",
+    fontSize: 40,
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 20,
   },
 });
