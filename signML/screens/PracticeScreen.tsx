@@ -21,6 +21,7 @@ import API from "../utils/API";
 import { showMessage } from "react-native-flash-message";
 import Letter from "../Components/Letter";
 import CustomModal from "../Components/CustomModal";
+import Button from "../Components/Button";
 
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
@@ -68,7 +69,7 @@ const PracticeScreen = ({ navigation }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={() => clearGame()}>
+        <TouchableOpacity onPress={() => restartGame()}>
           <Text style={{ color: "white" }}>Restart</Text>
         </TouchableOpacity>
       ),
@@ -92,7 +93,7 @@ const PracticeScreen = ({ navigation }) => {
       .then((response) => response.json())
       .then((json) => {
         if (json.letterSet) {
-          clearGame();
+          restartGame();
           setLetterSet(json.letterSet);
         }
       })
@@ -101,7 +102,8 @@ const PracticeScreen = ({ navigation }) => {
       });
   };
 
-  const clearGame = async () => {
+  const restartGame = async () => {
+    setErrorCount(0);
     setSelectedLetter(0);
     setSolvedLetters([false, false, false, false, false]);
   };
@@ -123,8 +125,6 @@ const PracticeScreen = ({ navigation }) => {
       const body = new FormData();
       body.append("base64Image", pic.base64);
       body.append("currLetter", letterSet[selectedLetter]);
-
-      console.log("here");
 
       fetch(API + "predictLetter", {
         method: "POST",
@@ -262,6 +262,7 @@ const PracticeScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         )}
+        <View style={{ flex: 1 }}></View>
         <View style={styles.promptContainer}>
           <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
           <View style={styles.letterContainer}>
@@ -279,17 +280,8 @@ const PracticeScreen = ({ navigation }) => {
             })}
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => makeGuess()}
-          disabled={loading}
-        >
-          {!loading ? (
-            <Text style={styles.btnText}>Submit</Text>
-          ) : (
-            <ActivityIndicator size="large" color="#fff" />
-          )}
-        </TouchableOpacity>
+
+        <Button loading={loading} text="Submit" onPress={() => makeGuess()} />
       </View>
       <CustomModal
         onClose={() => setHelpModalVis(false)}
@@ -333,8 +325,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     borderWidth: 2,
     borderRadius: 20,
-    marginTop: 50,
-    margin: 40,
+    marginBottom: 40,
     alignItems: "center",
     padding: 8,
 
@@ -378,23 +369,5 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 28,
     color: "white",
-  },
-  modalWrapper: {
-    marginBottom: 160,
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: colors.secondary,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignSelf: "center",
-    position: "absolute",
-    top: "25%",
-  },
-  modalHeader: {
-    color: "white",
-    fontSize: 40,
-    alignSelf: "center",
-    marginTop: 20,
-    marginBottom: 20,
   },
 });

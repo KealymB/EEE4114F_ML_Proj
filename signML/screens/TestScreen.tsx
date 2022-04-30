@@ -25,6 +25,7 @@ import CustomModal from "../Components/CustomModal";
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
+  const [score, setScore] = useState(0);
 
   const [errorCount, setErrorCount] = useState(0);
   const [letterSet, setLetterSet] = useState<string[] | []>([
@@ -89,6 +90,7 @@ const PracticeScreen = ({ navigation }) => {
   };
 
   const restartGame = () => {
+    setErrorCount(0);
     setSelectedLetter(0);
     setDifficultyModalVis(true);
   };
@@ -106,6 +108,7 @@ const PracticeScreen = ({ navigation }) => {
         if (json.word) {
           setLetterSet(json.word.split(""));
           const tempArr = new Array(json.word.split("").length).fill(false);
+          setScore(tempArr.length * 10);
           setSolvedLetters(tempArr);
         }
       })
@@ -263,6 +266,9 @@ const PracticeScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         )}
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <Text style={{ color: "white", fontSize: 20 }}>SCORE: {score}</Text>
+        </View>
         <View style={styles.promptContainer}>
           <Text style={{ fontSize: 25, color: "white" }}>
             Complete these letters
@@ -281,17 +287,7 @@ const PracticeScreen = ({ navigation }) => {
             })}
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => makeGuess()}
-          disabled={loading}
-        >
-          {!loading ? (
-            <Text style={styles.btnText}>Submit</Text>
-          ) : (
-            <ActivityIndicator size="large" color="#fff" />
-          )}
-        </TouchableOpacity>
+        <Button text="Submit" onPress={() => makeGuess()} loading={loading} />
       </View>
       <CustomModal
         onClose={() => setHelpModalVis(false)}
@@ -366,8 +362,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     borderWidth: 2,
     borderRadius: 20,
-    marginTop: 50,
-    margin: 40,
+    marginBottom: 40,
     alignItems: "center",
     padding: 8,
 
@@ -388,18 +383,6 @@ const styles = StyleSheet.create({
     margin: 10,
     alignItems: "center",
   },
-  baseLetter: {
-    fontSize: 30,
-    color: "white",
-    alignSelf: "center",
-  },
-  pendingLetter: {
-    color: "white",
-  },
-  trueLetter: {
-    color: "green",
-  },
-
   btn: {
     position: "absolute",
     backgroundColor: colors.secondary,
