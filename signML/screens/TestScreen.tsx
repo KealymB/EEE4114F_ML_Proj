@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   AppState,
   Image,
-  Modal,
   Vibration,
 } from "react-native";
 import { Camera, Constants } from "expo-camera";
@@ -21,6 +20,7 @@ import API from "../utils/API";
 import { showMessage } from "react-native-flash-message";
 import Button from "../Components/Button";
 import Letter from "../Components/Letter";
+import CustomModal from "../Components/CustomModal";
 
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
@@ -63,6 +63,8 @@ const PracticeScreen = ({ navigation }) => {
   const R_EXAMPLE = require("../assets/EXAMPLE_LETTERS/R_EXAMPLE.jpg");
 
   const EXAMPLES = [E_EXAMPLE, N_EXAMPLE, G_EXAMPLE, I_EXAMPLE, R_EXAMPLE];
+
+  const LETTERSET = ["E", "N", "G", "I", "R"];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -273,7 +275,6 @@ const PracticeScreen = ({ navigation }) => {
                   letter={letter}
                   id={index}
                   selectedLetter={selectedLetter}
-                  setSelectedLetter={(index) => setSelectedLetter(index)}
                   solvedLetters={solvedLetters}
                 />
               );
@@ -292,85 +293,52 @@ const PracticeScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
-      <Modal
-        animationType="slide"
-        transparent
-        visible={helpModalVis}
-        onRequestClose={() => {
-          setHelpModalVis(!helpModalVis);
-        }}
-        presentationStyle={"pageSheet"}
+      <CustomModal
+        onClose={() => setHelpModalVis(false)}
+        visable={helpModalVis}
+        title={"Example"}
       >
-        <View style={styles.modalWrapper}>
-          <TouchableOpacity
-            style={{ justifyContent: "flex-end", flexDirection: "row" }}
-            onPress={() => setHelpModalVis(false)}
-          >
-            <Feather name="x-circle" size={30} color="white" />
-          </TouchableOpacity>
-          <View style={{ justifyContent: "center" }}>
-            <Text
-              style={{
-                color: "white",
-                fontSize: 40,
-                alignSelf: "center",
-                marginTop: 20,
-              }}
-            >
-              Example
-            </Text>
-            <View
-              style={{ height: "100%", alignSelf: "center", marginTop: 10 }}
-            >
-              <Image
-                style={{ aspectRatio: 1, height: 250 }}
-                source={EXAMPLES[selectedLetter]}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        animationType="slide"
-        visible={difficultyModalVis}
-        onRequestClose={() => {
-          setDifficultyModalVis(!difficultyModalVis);
-        }}
-        presentationStyle={"pageSheet"}
-        transparent={true}
-      >
-        <View style={styles.modalWrapper}>
-          <Text style={styles.modalHeader}>Select Difficulty</Text>
-          <View
-            style={{
-              alignContent: "center",
-              marginTop: 10,
+        <Image
+          style={{
+            aspectRatio: 1,
+            height: 250,
+            borderRadius: 20,
+            overflow: "hidden",
+          }}
+          source={
+            EXAMPLES[
+              LETTERSET.findIndex(
+                (letter) => letter == letterSet[selectedLetter]
+              )
+            ]
+          }
+        />
+      </CustomModal>
+      <CustomModal visable={difficultyModalVis} title={"Select Difficulty"}>
+        <>
+          <Button
+            onPress={() => {
+              fetchPrompt("hard");
+              setDifficultyModalVis(false);
             }}
-          >
-            <Button
-              onPress={() => {
-                fetchPrompt("hard");
-                setDifficultyModalVis(false);
-              }}
-              text="HARD"
-            />
-            <Button
-              onPress={() => {
-                fetchPrompt("medium");
-                setDifficultyModalVis(false);
-              }}
-              text="MEDIUM"
-            />
-            <Button
-              onPress={() => {
-                fetchPrompt("easy");
-                setDifficultyModalVis(false);
-              }}
-              text="EASY"
-            />
-          </View>
-        </View>
-      </Modal>
+            text="HARD"
+          />
+          <Button
+            onPress={() => {
+              fetchPrompt("medium");
+              setDifficultyModalVis(false);
+            }}
+            text="MEDIUM"
+          />
+          <Button
+            onPress={() => {
+              fetchPrompt("easy");
+              setDifficultyModalVis(false);
+            }}
+            text="EASY"
+          />
+        </>
+      </CustomModal>
     </>
   );
 };
@@ -456,23 +424,5 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 28,
     color: "white",
-  },
-  modalWrapper: {
-    marginBottom: 160,
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: colors.secondary,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignSelf: "center",
-    position: "absolute",
-    top: "25%",
-  },
-  modalHeader: {
-    color: "white",
-    fontSize: 40,
-    alignSelf: "center",
-    marginTop: 20,
-    marginBottom: 20,
   },
 });

@@ -20,6 +20,7 @@ import colors from "../utils/theme";
 import API from "../utils/API";
 import { showMessage } from "react-native-flash-message";
 import Letter from "../Components/Letter";
+import CustomModal from "../Components/CustomModal";
 
 const PracticeScreen = ({ navigation }) => {
   const THRESHOLD = 30.0;
@@ -290,31 +291,21 @@ const PracticeScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={helpModalVis}
-        onRequestClose={() => {
-          setHelpModalVis(!helpModalVis);
-        }}
-        presentationStyle={"pageSheet"}
+      <CustomModal
+        onClose={() => setHelpModalVis(false)}
+        visable={helpModalVis}
+        title={"Example"}
       >
-        <View style={styles.modalWrapper}>
-          <TouchableOpacity
-            style={{ justifyContent: "flex-end", flexDirection: "row" }}
-            onPress={() => setHelpModalVis(false)}
-          >
-            <Feather name="x-circle" size={30} color="white" />
-          </TouchableOpacity>
-          <View style={{ justifyContent: "center", margin: 10 }}>
-            <Text style={styles.modalHeader}>Example</Text>
-            <Image
-              style={{ aspectRatio: 1, height: 250 }}
-              source={EXAMPLES[selectedLetter]}
-            />
-          </View>
-        </View>
-      </Modal>
+        <Image
+          style={{
+            aspectRatio: 1,
+            height: 250,
+            borderRadius: 20,
+            overflow: "hidden",
+          }}
+          source={EXAMPLES[selectedLetter]}
+        />
+      </CustomModal>
     </>
   );
 };

@@ -12,7 +12,7 @@ interface LetterProps {
   letter: string;
   selectedLetter: number;
   id: number;
-  setSelectedLetter: (id: number) => void;
+  setSelectedLetter?: (id: number) => void;
   solvedLetters: boolean[];
 }
 
@@ -25,6 +25,7 @@ const Letter: React.FC<LetterProps> = ({
 }) => {
   return (
     <TouchableOpacity
+      disabled={!setSelectedLetter}
       onPress={() => {
         setSelectedLetter(id);
       }}
