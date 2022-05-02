@@ -12,11 +12,11 @@ const WelcomeScreen = ({ navigation }) => {
       <View style={styles.wrapper}>
         <Button
           onPress={() => navigation.navigate("practiceScreen")}
-          text="Learn"
+          text="Practice"
         />
         <Button
           onPress={() => navigation.navigate("testScreen")}
-          text="Practice"
+          text="Assess"
         />
         <Button
           onPress={() => navigation.navigate("scoreScreen")}

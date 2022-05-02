@@ -48,7 +48,7 @@ export default function App() {
             name="practiceScreen"
             component={PracticeScreen}
             options={{
-              title: "Learn",
+              title: "Practice",
               headerStyle: {
                 backgroundColor: colors.secondary,
               },
@@ -62,7 +62,7 @@ export default function App() {
             name="testScreen"
             component={TestScreen}
             options={{
-              title: "Practice",
+              title: "Assess",
               headerStyle: {
                 backgroundColor: colors.secondary,
               },

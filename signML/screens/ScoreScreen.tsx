@@ -55,11 +55,18 @@ const ScoreScreen = () => {
           backgroundColor: colors.secondary,
           borderRadius: 10,
           borderColor: colors.primary,
-          borderWidth: 2,
-          marginBottom: 10,
+          borderWidth: 1,
+          marginBottom: 12,
         }}
       >
-        <Text style={{ color: "white", fontSize: 30, alignSelf: "center" }}>
+        <Text
+          style={{
+            color: "white",
+            fontSize: 30,
+            alignSelf: "center",
+            fontWeight: "200",
+          }}
+        >
           {name} - {score}
         </Text>
       </View>
@@ -80,8 +87,8 @@ const ScoreScreen = () => {
       >
         {scores
           .sort((a, b) => b.score - a.score)
-          ?.map((score) => {
-            return <Score score={score.score} name={score.name} />;
+          ?.map((score, index) => {
+            return <Score score={score.score} name={score.name} key={index} />;
           })}
         {scores?.length == 0 && (
           <Text
