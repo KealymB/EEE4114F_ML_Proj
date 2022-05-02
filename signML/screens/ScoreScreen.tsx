@@ -48,27 +48,15 @@ const ScoreScreen = () => {
 
   const Score: React.FC<ScoreType> = ({ name, score }) => {
     return (
-      <View
-        style={{
-          width: "100%",
-          padding: 10,
-          backgroundColor: colors.secondary,
-          borderRadius: 10,
-          borderColor: colors.primary,
-          borderWidth: 1,
-          marginBottom: 12,
-        }}
-      >
-        <Text
-          style={{
-            color: "white",
-            fontSize: 30,
-            alignSelf: "center",
-            fontWeight: "200",
-          }}
-        >
-          {name} - {score}
-        </Text>
+      <View style={styles.scoreContainer}>
+        <View style={{ flex: 3, padding: 10 }}>
+          <Text style={styles.scoreText}>{name}</Text>
+        </View>
+        <View style={{ flex: 1, backgroundColor: colors.primary, padding: 10 }}>
+          <Text style={[styles.scoreText, { color: colors.tertiary }]}>
+            {score}
+          </Text>
+        </View>
       </View>
     );
   };
@@ -110,4 +98,22 @@ const ScoreScreen = () => {
 
 export default ScoreScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  scoreText: {
+    color: "white",
+    fontSize: 30,
+    alignSelf: "center",
+    fontWeight: "200",
+  },
+  scoreContainer: {
+    width: "100%",
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    borderColor: colors.primary,
+    borderWidth: 1,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+});
