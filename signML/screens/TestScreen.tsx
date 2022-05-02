@@ -301,7 +301,7 @@ const PracticeScreen = ({ navigation }) => {
           <Text style={{ color: "white", fontSize: 20 }}>SCORE: {score}</Text>
         </View>
         <View style={styles.promptContainer}>
-          <Text style={{ fontSize: 25, color: "white" }}>
+          <Text style={{ fontSize: 25, color: "white", fontWeight: "200" }}>
             Complete these letters
           </Text>
           <View style={styles.letterContainer}>

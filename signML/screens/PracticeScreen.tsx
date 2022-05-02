@@ -264,7 +264,9 @@ const PracticeScreen = ({ navigation }) => {
         )}
         <View style={{ flex: 1 }}></View>
         <View style={styles.promptContainer}>
-          <Text style={{ fontSize: 25, color: "white" }}>Letters to learn</Text>
+          <Text style={{ fontSize: 25, color: "white", fontWeight: "200" }}>
+            Letters to learn
+          </Text>
           <View style={styles.letterContainer}>
             {letterSet.map((letter, index) => {
               return (

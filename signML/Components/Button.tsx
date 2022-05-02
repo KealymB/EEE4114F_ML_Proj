@@ -20,7 +20,11 @@ const Button: React.FC<ButtonProps> = ({ onPress, text, loading }) => {
       {!loading ? (
         <Text style={styles.btnText}>{text}</Text>
       ) : (
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator
+          size="large"
+          color="#fff"
+          style={{ justifyContent: "center", alignItems: "center" }}
+        />
       )}
     </TouchableOpacity>
   );
@@ -32,7 +36,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: colors.secondary,
     borderColor: colors.primary,
-    borderWidth: 2,
+    borderWidth: 1,
     borderRadius: 10,
     padding: 10,
     margin: 10,
@@ -52,5 +56,6 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 28,
     color: "white",
+    fontWeight: "200",
   },
 });

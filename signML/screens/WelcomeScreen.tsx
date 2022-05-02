@@ -5,17 +5,8 @@ import colors from "../utils/theme";
 
 const WelcomeScreen = ({ navigation }) => {
   return (
-    <View style={{ flex: 1, backgroundColor: colors.tertiary }}>
-      <View
-        style={{
-          paddingTop: 90,
-          paddingBottom: 20,
-          marginBottom: 120,
-          backgroundColor: colors.secondary,
-          borderBottomRightRadius: 20,
-          borderBottomLeftRadius: 20,
-        }}
-      >
+    <View style={{ flex: 1, backgroundColor: "#E5E5F4" }}>
+      <View style={styles.headerCont}>
         <Text style={styles.headerText}>SIGN TUTOR</Text>
       </View>
       <View style={styles.wrapper}>
@@ -37,7 +28,7 @@ const WelcomeScreen = ({ navigation }) => {
         style={{ position: "absolute", bottom: 20, alignSelf: "center" }}
       >
         <View style={{ alignItems: "center", marginBottom: 50 }}>
-          <Text style={{ color: colors.primary }}>How to play?</Text>
+          <Text style={{ color: colors.tertiary }}>How to play?</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -48,10 +39,12 @@ export default WelcomeScreen;
 
 const styles = StyleSheet.create({
   headerCont: {
+    paddingTop: 90,
+    paddingBottom: 40,
+    marginBottom: 120,
     backgroundColor: colors.secondary,
-    borderRadius: 20,
-    height: 200,
-    justifyContent: "center",
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
 
     shadowColor: "#000",
     shadowOffset: {
