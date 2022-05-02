@@ -257,7 +257,7 @@ const PracticeScreen = ({ navigation }) => {
               requestPerm();
             }}
           >
-            <Text style={{ color: "white" }}>
+            <Text style={{ color: colors.tertiary }}>
               Camera does not have permission, press to open prompt.
             </Text>
           </TouchableOpacity>

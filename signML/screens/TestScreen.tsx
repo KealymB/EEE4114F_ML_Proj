@@ -214,7 +214,7 @@ const PracticeScreen = ({ navigation }) => {
               showMessage({
                 message: `Well done, you learnt the word ${letterSet
                   .toString()
-                  .replace(",", "")} !! 🎉`,
+                  .replace(/\,/g, "")} !! 🎉`,
                 description: "Press here to play again, or press restart",
                 type: "success",
                 onPress: () => {
@@ -292,7 +292,7 @@ const PracticeScreen = ({ navigation }) => {
               requestPerm();
             }}
           >
-            <Text style={{ color: "white" }}>
+            <Text style={{ color: colors.tertiary }}>
               Camera does not have permission, press to open prompt.
             </Text>
           </TouchableOpacity>
@@ -344,7 +344,13 @@ const PracticeScreen = ({ navigation }) => {
           }
         />
       </CustomModal>
-      <CustomModal visable={difficultyModalVis} title={"Select Difficulty"}>
+      <CustomModal
+        visable={difficultyModalVis}
+        title={"Select Difficulty"}
+        onClose={() => {
+          navigation.navigate("welcomeScreen");
+        }}
+      >
         <>
           <Button
             onPress={() => {
@@ -388,6 +394,9 @@ const PracticeScreen = ({ navigation }) => {
       <CustomModal
         visable={solvedLetters.findIndex((letter) => letter == false) == -1}
         title={"Save Score"}
+        onClose={() => {
+          navigation.navigate("welcomeScreen");
+        }}
       >
         <>
           <TextInput
