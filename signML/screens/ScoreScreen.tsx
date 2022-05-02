@@ -56,7 +56,7 @@ const ScoreScreen = () => {
           borderRadius: 10,
           borderColor: colors.primary,
           borderWidth: 2,
-          marginTop: 10,
+          marginBottom: 10,
         }}
       >
         <Text style={{ color: "white", fontSize: 30, alignSelf: "center" }}>
@@ -69,7 +69,7 @@ const ScoreScreen = () => {
   return (
     <View style={{ backgroundColor: colors.tertiary, flex: 1 }}>
       <ScrollView
-        style={{ width: "100%" }}
+        style={{ width: "100%", padding: 10 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -78,9 +78,11 @@ const ScoreScreen = () => {
           />
         }
       >
-        {scores?.map((score) => {
-          return <Score score={score.score} name={score.name} />;
-        })}
+        {scores
+          .sort((a, b) => b.score - a.score)
+          ?.map((score) => {
+            return <Score score={score.score} name={score.name} />;
+          })}
         {scores?.length == 0 && (
           <Text
             style={{

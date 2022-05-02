@@ -12,6 +12,7 @@ import TestScreen from "./screens/TestScreen";
 import DataScreen from "./screens/DataScreen";
 import Constants from "expo-constants";
 import colors from "./utils/theme";
+import DSN from "./services/sentryInfo";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +23,7 @@ export default function App() {
   ]);
 
   Sentry.init({
-    dsn: "https://28ac5803fc2f4b6fb65cd1852dff5e55@o511887.ingest.sentry.io/6371146",
+    dsn: DSN,
     enableInExpoDevelopment: true,
     debug: false,
   });
