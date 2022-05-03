@@ -12,7 +12,7 @@ const WelcomeScreen = ({ navigation }) => {
       <View style={styles.wrapper}>
         <Button
           onPress={() => navigation.navigate("practiceScreen")}
-          text="Practice"
+          text="Practise"
         />
         <Button
           onPress={() => navigation.navigate("testScreen")}
@@ -28,7 +28,7 @@ const WelcomeScreen = ({ navigation }) => {
         style={{ position: "absolute", bottom: 20, alignSelf: "center" }}
       >
         <View style={{ alignItems: "center", marginBottom: 50 }}>
-          <Text style={{ color: colors.tertiary }}>How to play?</Text>
+          <Text style={{ color: colors.tertiary }}>More information</Text>
         </View>
       </TouchableOpacity>
     </View>

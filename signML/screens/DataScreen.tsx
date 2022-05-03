@@ -18,7 +18,7 @@ const PracticeScreen: React.FC = () => {
     children,
   }: {
     headerText: string;
-    children: JSX.Element;
+    children?: JSX.Element;
   }) => {
     return (
       <View
@@ -33,9 +33,11 @@ const PracticeScreen: React.FC = () => {
         }}
       >
         <View>
-          <Text style={{ color: "white", fontSize: 30 }}>{headerText}</Text>
+          <Text style={{ color: "white", fontSize: 30, alignSelf: "center" }}>
+            {headerText}
+          </Text>
         </View>
-        <View style={{ marginTop: 10 }}>{children}</View>
+        {children ? <View style={{ marginTop: 10 }}>{children}</View> : <></>}
       </View>
     );
   };
@@ -52,11 +54,7 @@ const PracticeScreen: React.FC = () => {
             and gamify the rest of the alphabet and possibly non-static signs.
           </Text>
         </HowTo>
-        <HowTo headerText="Basic Usage">
-          <Text style={{ color: "white" }}>
-            Learning happens within the "Practice" screen. The
-          </Text>
-        </HowTo>
+        <HowTo headerText="Made by Kealym B" />
       </ScrollView>
     </View>
   );

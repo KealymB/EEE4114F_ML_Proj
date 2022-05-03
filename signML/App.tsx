@@ -38,7 +38,6 @@ export default function App() {
     try {
       const value = await AsyncStorage.getItem("newUser");
       if (value !== null) {
-        console.log("Value: ", value == "true");
         setNewUser(value == "true");
       }
     } catch (e) {
@@ -90,7 +89,7 @@ export default function App() {
                 name="practiceScreen"
                 component={PracticeScreen}
                 options={{
-                  title: "Practice",
+                  title: "Practise",
                   headerStyle: {
                     backgroundColor: colors.secondary,
                   },
@@ -132,7 +131,7 @@ export default function App() {
                 name="dataScreen"
                 component={DataScreen}
                 options={{
-                  title: "How to",
+                  title: "More info",
                   headerStyle: {
                     backgroundColor: colors.secondary,
                   },
