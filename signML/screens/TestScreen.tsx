@@ -23,7 +23,7 @@ import Button from "../Components/Button";
 import Letter from "../Components/Letter";
 import CustomModal from "../Components/CustomModal";
 
-const PracticeScreen = ({ navigation }) => {
+const PracticeScreen: React.FC = ({ navigation }) => {
   const THRESHOLD = 30.0;
   const [hasPermission, setHasPermission] = useState<boolean | undefined>();
   const [score, setScore] = useState(1);
