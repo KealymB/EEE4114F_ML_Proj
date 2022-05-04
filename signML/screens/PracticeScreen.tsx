@@ -217,6 +217,19 @@ const PracticeScreen = ({ navigation }) => {
       <View style={styles.container}>
         {hasPermission && isActive && isFocused ? (
           <View style={styles.cameraView}>
+            {!loading && (
+              <Image
+                source={LETTERS[selectedLetter]}
+                style={{
+                  opacity: 0.7,
+                  position: "absolute",
+                  top: 0,
+                  width: "100%",
+                  height: "100%",
+                  zIndex: 9999,
+                }}
+              />
+            )}
             <Camera
               style={{ width: "100%", height: "100%" }}
               type={Camera.Constants.Type.back}
@@ -224,13 +237,6 @@ const PracticeScreen = ({ navigation }) => {
               ratio={"1:1"}
               flashMode={Constants.FlashMode.on}
             >
-              {!loading && (
-                <Image
-                  source={LETTERS[selectedLetter]}
-                  style={{ flex: 1, alignSelf: "center", opacity: 0.7 }}
-                />
-              )}
-
               {errorCount > 1 && (
                 <TouchableOpacity
                   style={{ position: "absolute", right: 5, top: 5 }}
