@@ -93,7 +93,7 @@ const Onboarding: React.FC = ({ route }) => {
             image: <VideoPlayer path={WELCOME} id={1} key={1} />,
             title: "Learn how to sign",
             subtitle:
-              "To learn the 5 currently available ASL letters go to the practise screen",
+              "To learn the 5 currently available ASL letters go to the practice screen",
           },
           {
             backgroundColor: colors.secondary,

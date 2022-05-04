@@ -89,7 +89,7 @@ export default function App() {
                 name="practiceScreen"
                 component={PracticeScreen}
                 options={{
-                  title: "Practise",
+                  title: "Practice",
                   headerStyle: {
                     backgroundColor: colors.secondary,
                   },

@@ -12,7 +12,7 @@ const WelcomeScreen = ({ navigation }) => {
       <View style={styles.wrapper}>
         <Button
           onPress={() => navigation.navigate("practiceScreen")}
-          text="Practise"
+          text="Practice"
         />
         <Button
           onPress={() => navigation.navigate("testScreen")}
