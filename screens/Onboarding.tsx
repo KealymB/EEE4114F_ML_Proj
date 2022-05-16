@@ -5,6 +5,7 @@ import OB from "react-native-onboarding-swiper";
 import { Video, AVPlaybackStatus, VideoState, VideoProps } from "expo-av";
 
 import colors from "../utils/theme";
+import API from "../utils/API";
 
 interface VideoPlayerProps {
   path: string;
@@ -21,6 +22,21 @@ const Onboarding: React.FC = ({ route }) => {
   const HINT = require("../assets/onboarding/03_HINT.mp4");
   const ASSESS = require("../assets/onboarding/04_ASSESS.mp4");
   const WIN = require("../assets/onboarding/05_WIN.mp4");
+
+  useEffect(() => {
+    initServer();
+  }, []);
+
+  const initServer = async () => {
+    //This has been added as so few people use the app, I need a way to wake up the heroku server
+    //Else when a new users first joins it takes super long to make a requst.
+    //I could do this for all all users, but just the new ones are improtant for first impressions
+    try {
+      const resp = await fetch(API);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const storeData = async () => {
     try {
